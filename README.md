@@ -1,5 +1,5 @@
 # EE411-Project
-# Reproducibility Challenge:\\Overcoming catastrophic forgetting in neural networks
+# Reproducibility Challenge: Overcoming catastrophic forgetting in neural networks
 
 
 <p align="center">
@@ -35,7 +35,7 @@ Milica Vukasinovic - @milicavukaa
 
 ## About
 
-This repository contains the work done for our [Fundamentals of Inference and Learning](https://edu.epfl.ch/coursebook/en/fundamentals-of-inference-and-learning-EE-411)) project. The goal of our effort is to use amino acid sequences to predict the melting temperature (Tm) of proteins, which an important characteristic that indicates a protein's thermal stability.
+This repository contains the work done for our [Fundamentals of Inference and Learning](https://edu.epfl.ch/coursebook/en/fundamentals-of-inference-and-learning-EE-411) project. The goal of our effort is to use amino acid sequences to predict the melting temperature (Tm) of proteins, which an important characteristic that indicates a protein's thermal stability.
 
 ## Data
 
