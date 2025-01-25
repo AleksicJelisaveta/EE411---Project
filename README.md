@@ -35,10 +35,11 @@ Milica Vukasinovic - @milicavukaa
 
 ## About
 
-This repository contains the work done for our [Fundamentals of Inference and Learning](https://edu.epfl.ch/coursebook/en/fundamentals-of-inference-and-learning-EE-411) project. The goal of our effort is to 
+This repository contains the work done for our [Fundamentals of Inference and Learning](https://edu.epfl.ch/coursebook/en/fundamentals-of-inference-and-learning-EE-411) project. The goal of our effort is to reproduce results obtained in (https://arxiv.org/pdf/2105.04093) where using Elastic Weight Consolidation, regularization technique in order to mitigate catastrophic forgetting in neural networks. Results are compared with L2 regularization and no regularization. Datasets are permutated and rotated MNIST dataset. 
 ## Data
-
-## Installation
+Two datasets are used: PermutedMNIST - a unique fixed random permutation of the pixel values is applied for each task
+as well as RotatedMNIST - ten tasks of rotating MNIST, where task i is
+produced by a fixed rotation of 10(i−1) degrees). 
 
 
 
@@ -79,6 +80,7 @@ This repository contains the work done for our [Fundamentals of Inference and Le
 
 
 ## Credits
+This work is done only as reproducibility challenge and original methods and background is given by (https://arxiv.org/pdf/2105.04093).
 
 This repository is based on a heavily modified fork of [pytorch-template](https://github.com/victoresque/pytorch-template) and [asr_project_template](https://github.com/WrathOfGrapes/asr_project_template) repositories.
 
