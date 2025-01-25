@@ -85,18 +85,26 @@ def create_task_dataloaders(task_datasets, batch_size=64):
         task_loaders.append(task_loader)
     return task_loaders
 
-#Load MNIST dataset
-train_dataset = datasets.MNIST(root='./data', train=True, download=True)
-test_dataset = datasets.MNIST(root='./data', train=False, download=True)
 
-#Produce tasks by rotation and permutation for both train and test set 
-permuted_tasks_train, permuted_tasks_test = permute_datasets(train_dataset, test_dataset)
 
-rotated_tasks_train, rotated_tasks_test = rotate_datasets(train_dataset)
 
-#Create loaders for final datasets 
-permuted_train_loaders = create_task_dataloaders(permuted_tasks_train)
-permuted_test_loaders = create_task_dataloaders(permuted_tasks_test)
+def load_datasets():
+    # Load MNIST dataset
+    train_dataset = datasets.MNIST(root='./data', train=True, download=True)
+    test_dataset = datasets.MNIST(root='./data', train=False, download=True)
 
-rotated_train_loaders = create_task_dataloaders(rotated_tasks_train)
-rotated_test_loaders = create_task_dataloaders(rotated_tasks_test)
+    # Generate permuted datasets for both train and test
+    permuted_tasks_train, permuted_tasks_test = permute_datasets(train_dataset, test_dataset)
+
+    # Generate rotated datasets for both train and test
+    rotated_tasks_train, rotated_tasks_test = rotate_datasets(train_dataset, test_dataset)
+
+    # Create data loaders for permuted datasets
+    permuted_train_loaders = create_task_dataloaders(permuted_tasks_train)
+    permuted_test_loaders = create_task_dataloaders(permuted_tasks_test)
+
+    # Create data loaders for rotated datasets
+    rotated_train_loaders = create_task_dataloaders(rotated_tasks_train)
+    rotated_test_loaders = create_task_dataloaders(rotated_tasks_test)
+
+    return permuted_train_loaders, permuted_test_loaders, rotated_train_loaders, rotated_test_loaders
