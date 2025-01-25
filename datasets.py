@@ -26,10 +26,7 @@ class RotatedMNIST(Dataset):
 class PermutedMNIST(Dataset):
     def __init__(self, data, permutation=None):
         self.data = data
-        if permutation is not None:
-            self.permutation = permutation
-        else:
-            np.random.permutation(28*28)
+        self.permutation = permutation if permutation is not None else np.random.permutation(28*28)
         
     def __len__(self):
         return len(self.data)
@@ -46,30 +43,36 @@ class PermutedMNIST(Dataset):
         return permuted_image_tensor, label
     
 
-    #Permute each task 
-def permute_dataset(data):
-
-    task_datasets_permuted = []
-    num_tasks = 10
-    for i in range(num_tasks): 
-        random_permutation = np.random.permutation(28 * 28) 
-        permuted_dataset = PermutedMNIST(data, random_permutation)
-        task_datasets_permuted.append(permuted_dataset)
+def permute_datasets(train_data, test_data):
+    task_datasets_train = []
+    task_datasets_test = []
     
-    return task_datasets_permuted
+    num_tasks = 10
+    for i in range(num_tasks):
+        random_permutation = np.random.permutation(28 * 28)
+        
+
+        permuted_train_dataset = PermutedMNIST(train_data, random_permutation)
+        permuted_test_dataset = PermutedMNIST(test_data, random_permutation)
+        
+        task_datasets_train.append(permuted_train_dataset)
+        task_datasets_test.append(permuted_test_dataset)
+    
+    return task_datasets_train, task_datasets_test
 
 
-#Rotate each task
-def rotate_dataset(data):
-
-    task_datasets_rotated = []
+def rotate_datasets(train_data, test_data):
+    task_datasets_train = []
+    task_datasets_test = []
     for i in range(10):
         degree = 10 * i 
-        rotated_data = RotatedMNIST(data, degree)
-        task_datasets_rotated.append(rotated_data)
-    
-    return task_datasets_rotated
+        rotated_data_train = RotatedMNIST(train_data, degree)
+        rotated_data_test = RotatedMNIST(test_data, degree)
 
+        task_datasets_train.append(rotated_data_train)
+        task_datasets_test.append(rotated_data_test)
+    
+    return task_datasets_train, task_datasets_test
 
 
 def create_task_dataloaders(task_datasets, batch_size=64):
@@ -79,14 +82,9 @@ def create_task_dataloaders(task_datasets, batch_size=64):
         task_loaders.append(task_loader)
     return task_loaders
 
-#Load MNIST dataset for train and test
 train_dataset = datasets.MNIST(root='./data', train=True, download=True)
 test_dataset = datasets.MNIST(root='./data', train=False, download=True)
 
-#Permute train and test sets
-permuted_tasks_train = permute_dataset(train_dataset)
-permuted_tasks_test = permute_dataset(test_dataset)
+permuted_tasks_train, permuted_tasks_test = permute_datasets(train_dataset, test_dataset)
 
-#Rotate train and test sets
-rotated_tasks_train = rotate_dataset(train_dataset)
-rotated_tasks_test = rotate_dataset(test_dataset)
+rotated_tasks_train, rotated_tasks_test = rotate_datasets(train_dataset)
