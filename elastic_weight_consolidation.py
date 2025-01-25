@@ -5,6 +5,7 @@ from torch.utils.data import Dataset, DataLoader, Subset
 from torchvision import datasets, transforms
 import numpy as np
 
+
 class EWC:
     def __init__(self, model, dataloader, device='cpu'):
         """
