@@ -6,6 +6,13 @@ import torchvision
 from PIL import Image
 
 class RotatedMNIST(Dataset):
+    """
+    Custom Dataset for RotatedMNIST
+
+    Args:
+        data: The original MNIST dataset.
+        degree: The angle (in degrees) to rotate the images.
+    """
     def __init__(self, data, degree):
         self.data = data
         self.rotation_degree = degree
@@ -24,6 +31,14 @@ class RotatedMNIST(Dataset):
 
 
 class PermutedMNIST(Dataset):
+    """
+    Custom Dataset for PermutedMNIST
+
+    Args:
+        data: The original MNIST dataset.
+        permutation: A predefined pixel permutation (optional).
+                         If None, a random permutation is generated.
+    """
     def __init__(self, data, permutation=None):
         self.data = data
         #Use same permutation for tasks in both train and test set but different accross tasks in the same set
@@ -43,9 +58,18 @@ class PermutedMNIST(Dataset):
         
         return permuted_image_tensor, label
     
-#Permutes train and test set
 def permute_datasets(train_data, test_data):
-    #Save permuted tasks
+    """
+    Generates multiple permuted datasets for train and test sets.
+    
+    Args:
+        train_data: Training dataset.
+        test_data: Testing dataset.
+    
+    Returns:
+        task_datasets_permute_train: List of permuted training datasets.
+        task_datasets_permute_test: List of permuted testing datasets.
+    """
     task_datasets_permute_train = []
     task_datasets_permute_test = []
     
@@ -62,9 +86,19 @@ def permute_datasets(train_data, test_data):
     
     return task_datasets_permute_train, task_datasets_permute_test
 
-#Rotates train and test set
+
 def rotate_datasets(train_data, test_data):
-    #Save rotated tasks
+    """ 
+    Generates multiple rotated datasets for train and test sets.
+    
+    Args:
+        train_data: Training dataset.
+        test_data: Testing dataset.
+    
+    Returns:
+        task_datasets_rotate_train: List of rotated training datasets.
+        task_datasets_rotate_test: List of rotated testing datasets.
+    """   
     task_datasets_rotate_train = []
     task_datasets_rotate_test = []
     for i in range(10):
@@ -77,8 +111,17 @@ def rotate_datasets(train_data, test_data):
     
     return task_datasets_rotate_train, task_datasets_rotate_test
 
-#Create task loaders 
 def create_task_dataloaders(task_datasets, batch_size=64):
+    """
+    Converts datasets into DataLoaders for batching and shuffling.
+    
+    Args:
+        task_datasets: List of datasets for different tasks.
+        batch_size: Number of samples per batch.
+    
+    Returns:
+        task_loaders: List of DataLoaders for the tasks.
+    """
     task_loaders = []
     for task_dataset in task_datasets:
         task_loader = DataLoader(task_dataset, batch_size=batch_size, shuffle=True)
@@ -89,7 +132,16 @@ def create_task_dataloaders(task_datasets, batch_size=64):
 
 
 def load_datasets():
-    # Load MNIST dataset
+    """
+    Loads the MNIST dataset and generates permuted and rotated tasks.
+    Creates DataLoaders for these tasks.
+    
+    Returns:
+        permuted_train_loaders: List of DataLoaders for permuted training tasks.
+        permuted_test_loaders: List of DataLoaders for permuted testing tasks.
+        rotated_train_loaders: List of DataLoaders for rotated training tasks.
+        rotated_test_loaders: List of DataLoaders for rotated testing tasks.
+    """
     train_dataset = datasets.MNIST(root='./data', train=True, download=True)
     test_dataset = datasets.MNIST(root='./data', train=False, download=True)
 
