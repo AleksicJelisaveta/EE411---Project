@@ -309,59 +309,24 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
     # Train on first task
     epoch_accuracies_A1, epoch_accuracies_B1, epoch_accuracies_C1 = train_model_on_task(model,'A', permuted_train_loaders[0], permuted_test_loaders[0], [],[], criterion, optimizer, epochs, early_stopping=early_stopping)
 
-    # Evaluate on first task
-    accuracy11 = evaluate_model_on_task(model, permuted_test_loaders[0])
-    #print(f"Accuracy of task 1 after training on first task: {accuracy11:.4f}\n")
-
     # Train on second task
     epoch_accuracies_A2, epoch_accuracies_B2, epoch_accuracies_C2 = train_model_on_task(model,'B', permuted_train_loaders[1], permuted_test_loaders[0], permuted_test_loaders[1],[], criterion, optimizer, epochs, early_stopping=early_stopping)
-
-    # Evaluate on second task
-    accuracy22 = evaluate_model_on_task(model, permuted_test_loaders[1])
-    #print(f"Accuracy on task 2 after training on first and second task: {accuracy22:.4f}")
-    accuracy21 = evaluate_model_on_task(model, permuted_test_loaders[0])
-    #print(f"Accuracy on task 1 after training on first and second task: {accuracy21:.4f}\n")
 
     # Train on third task
     epoch_accuracies_A3, epoch_accuracies_B3, epoch_accuracies_C3 = train_model_on_task(model,'C', permuted_train_loaders[2],permuted_test_loaders[0], permuted_test_loaders[1],permuted_test_loaders[2], criterion, optimizer, epochs, early_stopping=early_stopping)
 
-    # Evaluate on third task
-    accuracy33 = evaluate_model_on_task(model, permuted_test_loaders[2])
-    #print(f"Accuracy on task 3 after training on all tasks: {accuracy33:.4f}")
-    accuracy32 = evaluate_model_on_task(model, permuted_test_loaders[1])
-    #print(f"Accuracy on task 2 after training on all tasks: {accuracy32:.4f}")
-    accuracy31 = evaluate_model_on_task(model, permuted_test_loaders[0])
-    #print(f"Accuracy on task 1 after training on all tasks: {accuracy31:.4f}\n")
-
+    
     # Define EWC
     ewc = EWC(model, permuted_train_loaders[0])
 
     # Train on first task with EWC
     epoch_accuracies_A1_ewc, epoch_accuracies_B1_ewc, epoch_accuracies_C1_ewc = train_model_on_task(model,'A', permuted_train_loaders[0], permuted_test_loaders[0], [],[], criterion, optimizer, epochs,ewc = ewc, early_stopping=early_stopping)
 
-    # Evaluate on first task with EWC
-    accuracy11_ewc = evaluate_model_on_task(model, permuted_test_loaders[0])
-    #print(f"Accuracy on task 1 with EWC: {accuracy11_ewc:.4f}\n")
-
     # Train on second task with EWC
     epoch_accuracies_A2_ewc, epoch_accuracies_B2_ewc, epoch_accuracies_C2_ewc = train_model_on_task(model,'B', permuted_train_loaders[1], permuted_test_loaders[0], permuted_test_loaders[1],[], criterion, optimizer, epochs, ewc = ewc, early_stopping=early_stopping)
 
-    # Evaluate on second task with EWC
-    accuracy22_ewc = evaluate_model_on_task(model, permuted_test_loaders[1])
-    #print(f"Accuracy on task 2 with EWC: {accuracy22_ewc:.4f}")
-    accuracy21_ewc = evaluate_model_on_task(model, permuted_test_loaders[0])
-    #print(f"Accuracy on task 1 with EWC: {accuracy21_ewc:.4f}\n")
-
     # Train on third task with EWC
     epoch_accuracies_A3_ewc, epoch_accuracies_B3_ewc, epoch_accuracies_C3_ewc = train_model_on_task(model,'C', permuted_train_loaders[2],permuted_test_loaders[0], permuted_test_loaders[1],permuted_test_loaders[2], criterion, optimizer, epochs,ewc = ewc, early_stopping=early_stopping)
-
-    # Evaluate on third task with EWC
-    accuracy33_ewc = evaluate_model_on_task(model, permuted_test_loaders[2])
-    #print(f"Accuracy on task 3 with EWC: {accuracy33_ewc:.4f}")
-    accuracy32_ewc = evaluate_model_on_task(model, permuted_test_loaders[1])
-    #print(f"Accuracy on task 2 with EWC: {accuracy32_ewc:.4f}")
-    accuracy31_ewc = evaluate_model_on_task(model, permuted_test_loaders[0])
-    #print(f"Accuracy on task 1 with EWC: {accuracy31_ewc:.4f}\n")
 
 
     # use L2 regularization
@@ -373,29 +338,12 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
     # Train on first task with L2 regularization
     epoch_accuracies_A1_L2, epoch_accuracies_B1_L2, epoch_accuracies_C1_L2 = train_model_on_task(model,'A', permuted_train_loaders[0], permuted_test_loaders[0], [],[], criterion, optimizer, epochs, early_stopping=early_stopping)
 
-    # Evaluate on first task with L2 regularization
-    accuracy11_l2 = evaluate_model_on_task(model, permuted_test_loaders[0])
-   # print(f"Accuracy on task 1 with L2 regularization: {accuracy11_l2:.4f}")
-
     # Train on second task with L2 regularization
     epoch_accuracies_A2_L2, epoch_accuracies_B2_L2, epoch_accuracies_C2_L2 = train_model_on_task(model,'B', permuted_train_loaders[1], permuted_test_loaders[0], permuted_test_loaders[1],[], criterion, optimizer, epochs, early_stopping=early_stopping)
-
-    # Evaluate on second task with L2 regularization
-    accuracy22_l2 = evaluate_model_on_task(model, permuted_test_loaders[1])
-    #print(f"Accuracy on task 2 with L2 regularization: {accuracy22_l2:.4f}")
-    accuracy21_l2 = evaluate_model_on_task(model, permuted_test_loaders[0])
-    #print(f"Accuracy on task 1 with L2 regularization: {accuracy21_l2:.4f}\n")
     
     # Train on third task with L2 regularization
     epoch_accuracies_A3_L2, epoch_accuracies_B3_L2, epoch_accuracies_C3_L2 = train_model_on_task(model,'C', permuted_train_loaders[2],permuted_test_loaders[0], permuted_test_loaders[1],permuted_test_loaders[2], criterion, optimizer, epochs, early_stopping=early_stopping)
 
-    # Evaluate on third task with L2 regularization
-    accuracy33_l2 = evaluate_model_on_task(model, permuted_test_loaders[2])
-    #print(f"Accuracy on task 3 with L2 regularization: {accuracy33_l2:.4f}")
-    accuracy32_l2 = evaluate_model_on_task(model, permuted_test_loaders[1])
-    #print(f"Accuracy on task 2 with L2 regularization: {accuracy32_l2:.4f}")
-    accuracy31_l2 = evaluate_model_on_task(model, permuted_test_loaders[0])
-    #print(f"Accuracy on task 1 with L2 regularization: {accuracy31_l2:.4f}\n")
 
     return epoch_accuracies_A1, epoch_accuracies_B1, epoch_accuracies_C1, epoch_accuracies_A2, epoch_accuracies_B2, epoch_accuracies_C2, epoch_accuracies_A3, epoch_accuracies_B3, epoch_accuracies_C3,  epoch_accuracies_A1_ewc, epoch_accuracies_B1_ewc, epoch_accuracies_C1_ewc, epoch_accuracies_A2_ewc, epoch_accuracies_B2_ewc, epoch_accuracies_C2_ewc, epoch_accuracies_A3_ewc, epoch_accuracies_B3_ewc, epoch_accuracies_C3_ewc, epoch_accuracies_A1_L2, epoch_accuracies_B1_L2, epoch_accuracies_C1_L2, epoch_accuracies_A2_L2, epoch_accuracies_B2_L2, epoch_accuracies_C2_L2, epoch_accuracies_A3_L2, epoch_accuracies_B3_L2, epoch_accuracies_C3_L2
 
