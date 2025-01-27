@@ -11,6 +11,7 @@ class RotatedMNIST(Dataset):
 
     Args:
         data: The original MNIST dataset.
+        
         degree: The angle (in degrees) to rotate the images.
     """
     def __init__(self, data, degree):
@@ -73,10 +74,14 @@ def permute_datasets(train_data, test_data):
     task_datasets_permute_train = []
     task_datasets_permute_test = []
     
-    num_tasks = 10
+    num_tasks = 3
+    base_seed = 42
     for i in range(num_tasks):
+        task_seed = base_seed + i
+        rng = np.random.default_rng(task_seed)
+        
 
-        random_permutation = np.random.permutation(28 * 28)
+        random_permutation = rng.permutation(28 * 28)
         
         permuted_train_dataset = PermutedMNIST(train_data, random_permutation)
         permuted_test_dataset = PermutedMNIST(test_data, random_permutation)
@@ -101,8 +106,11 @@ def rotate_datasets(train_data, test_data):
     """   
     task_datasets_rotate_train = []
     task_datasets_rotate_test = []
-    for i in range(10):
-        degree = 10 * i #Each tasks rotate for degree given by this formula 
+    num_tasks=3
+
+    for i in range(num_tasks):
+        degree = 30 * i #Each tasks rotate for degree given by this formula 
+
         rotated_data_train = RotatedMNIST(train_data, degree)
         rotated_data_test = RotatedMNIST(test_data, degree)
 
