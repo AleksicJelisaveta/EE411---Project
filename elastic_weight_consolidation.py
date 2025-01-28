@@ -7,7 +7,7 @@ import numpy as np
 
 
 class EWC:
-    def __init__(self, model, dataloader, device='cpu'):
+    def __init__(self, model, device='cpu'):
         """
         Elastic Weight Consolidation (EWC) implementation.
 
@@ -17,24 +17,22 @@ class EWC:
             device (str): Device to perform computations on ('cpu' or 'cuda').
         """
         self.model = model
-        self.dataloader = dataloader
         self.device = device
         self.params = {n: p for n, p in model.named_parameters() if p.requires_grad}
-        self.fisher = None
+        # Initialize Fisher Information matrix
+        self.fisher = {n: torch.zeros_like(p, device=self.device) for n, p in self.params.items()}
         self.prev_params = None
 
-    def compute_fisher(self):
+    def compute_fisher(self, dataloader):
         """
         Compute the Fisher Information Matrix for the current task.
         """
-        # Initialize Fisher Information matrix
-        fisher = {n: torch.zeros_like(p, device=self.device) for n, p in self.params.items()}
-
+        new_fisher = {n: torch.zeros_like(p, device=self.device) for n, p in self.params.items()}
         # Set the model to evaluation mode
         self.model.eval()
 
         # Loop through the dataloader and accumulate Fisher Information
-        for inputs, targets in self.dataloader:
+        for inputs, targets in dataloader:
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             # reshape inputs to (batch_size, input_dim * input_dim) from (batch_size, 1, input_dim, input_dim)
             inputs = inputs.view(inputs.size(0), -1)
@@ -52,15 +50,18 @@ class EWC:
 
             # Accumulate Fisher Information from gradients
             for n, p in self.params.items():
-                fisher[n] += p.grad ** 2 / len(self.dataloader)
+                new_fisher[n] += p.grad ** 2 / len(dataloader)
 
-        self.fisher = fisher
+        # Update Fisher Information matrix
+        for n in self.fisher.keys():
+            self.fisher[n] += new_fisher[n]
 
-    def store_prev_params(self):
+    def update_params(self, model):
         """
         Store the current parameters of the model.
         """
         self.prev_params = {n: p.clone().detach() for n, p in self.params.items()}
+        self.params = {n: p for n, p in model.named_parameters() if p.requires_grad}
 
     def compute_ewc_loss(self, lambda_ewc):
         """
