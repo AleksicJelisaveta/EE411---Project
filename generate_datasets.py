@@ -107,7 +107,7 @@ def rotate_datasets(train_data, test_data, num_tasks=10):
     task_datasets_rotate_test = []
 
     for i in range(num_tasks):
-        degree = 30 * i #Each tasks rotate for degree given by this formula 
+        degree = 10 * i #Each tasks rotate for degree given by this formula 
 
         rotated_data_train = RotatedMNIST(train_data, degree)
         rotated_data_test = RotatedMNIST(test_data, degree)
