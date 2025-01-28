@@ -62,8 +62,8 @@ produced by a fixed rotation of 10(i−1) degrees).
     ├── evaluate_models.ipynb: computes the relevant metrics and plots the results
 ├── predictions: Folder containing model predictions on the validation dataset
 ├── scripts
-    ├── datasets.py: definition ProteinDataset used by the ESM model
-    ├── esm.py: defitinion of the esm model we used
+    ├── datasets.py: 
+    ├── 
     ├── evaluate.py: code to evaluete the performance of the esm model
     ├── run.py: python script to run and evaluate the ESM model
     ├── train.py: code for training the esm model

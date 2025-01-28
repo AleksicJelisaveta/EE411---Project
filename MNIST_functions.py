@@ -5,8 +5,12 @@ from torch.utils.data import Dataset, DataLoader, Subset
 from torchvision import datasets, transforms
 import numpy as np
 from elastic_weight_consolidation import EWC
+<<<<<<< HEAD
 import generate_datasets as gen_ds
 
+=======
+import generate_datasets as ds
+>>>>>>> 18e7b71726bbd0da62d36d853c835f14c3226425
 
 class CustomNN(nn.Module):
     def __init__(self, num_hidden_layers=2, hidden_size=400, input_size=28*28, output_size=10, dropout_input=0.2, dropout_hidden=0.5):
