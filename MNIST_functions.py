@@ -5,7 +5,9 @@ from torch.utils.data import Dataset, DataLoader, Subset
 from torchvision import datasets, transforms
 import numpy as np
 from elastic_weight_consolidation import EWC
-import generate_datasets as ds
+import generate_datasets as gen_ds
+from sklearn.model_selection import train_test_split
+import random
 
 class CustomNN(nn.Module):
     def __init__(self, num_hidden_layers=2, hidden_size=400, input_size=28*28, output_size=10, dropout_input=0.2, dropout_hidden=0.5):
@@ -63,9 +65,6 @@ def train_model_on_task(model,type, train_dataloader, test_dataloaderA, test_dat
             optimizer.step()
             total_loss += task_loss.item()
           
-
-
-        #print(f"Epoch {epoch + 1}/{epochs}, Loss: {total_loss / len(train_dataloader):.4f}")
        
        
         # calculate accuracy on test set per epoch
@@ -155,7 +154,6 @@ def train_model_on_task(model,type, train_dataloader, test_dataloaderA, test_dat
     return epoch_accuracies_A, epoch_accuracies_B, epoch_accuracies_C   
 
 
-from sklearn.model_selection import train_test_split
 
 class EarlyStopping:
     def __init__(self, patience=5):
@@ -178,6 +176,37 @@ class EarlyStopping:
             if self.counter >= self.patience:
                 self.early_stop = True
         return self.early_stop
+        
+    # Set hyperparameters
+def set_experiment_params(figure_type='2A'):
+    if figure_type == '2A':
+        learning_rate = 1e-3
+        dropout_input = 0.0
+        dropout_hidden = 0.0
+        early_stopping_enabled = False
+        num_hidden_layers = 2
+        width_hidden_layers = 400
+        epochs = 20
+    elif figure_type == '2B':
+        learning_rate = np.logspace(-5, -3, 100)
+        dropout_input = 0.2
+        dropout_hidden = 0.5
+        early_stopping_enabled = True
+        num_hidden_layers = 2
+        width_hidden_layers = range(400,2000)
+        epochs = 100
+    elif figure_type == '2C':
+        learning_rate = 1e-3
+        dropout_input = 0.0
+        dropout_hidden = 0.0
+        early_stopping_enabled = False
+        num_hidden_layers = 6
+        width_hidden_layers = 100
+        epochs = 100
+    else:
+        raise ValueError(f"Unknown figure type: {figure_type}")
+    
+    return learning_rate, dropout_input,dropout_hidden, early_stopping_enabled, num_hidden_layers, width_hidden_layers, epochs
 
 
 def train_model_on_tasks(model, train_loaders, criterion, optimizer, epochs_per_task, ewc=None, lambda_ewc=0.0, patience=5):
@@ -261,36 +290,7 @@ def evaluate_model_on_task(model, dataloader):
 
     return correct / total
 
-# Set hyperparameters
-def set_experiment_params(figure_type='2A'):
-    if figure_type == '2A':
-        learning_rate = 1e-3
-        dropout_input = 0.0
-        dropout_hidden = 0.0
-        early_stopping_enabled = False
-        num_hidden_layers = 2
-        width_hidden_layers = 400
-        epochs = 20
-    elif figure_type == '2B':
-        learning_rate = np.logspace(-5, -3, 100)
-        dropout_input = 0.2
-        dropout_hidden = 0.5
-        early_stopping_enabled = True
-        num_hidden_layers = 2
-        width_hidden_layers = range(400,2000)
-        epochs = 100
-    elif figure_type == '2C':
-        learning_rate = 1e-3
-        dropout_input = 0.0
-        dropout_hidden = 0.0
-        early_stopping_enabled = False
-        num_hidden_layers = 6
-        width_hidden_layers = 100
-        epochs = 100
-    else:
-        raise ValueError(f"Unknown figure type: {figure_type}")
-    
-    return learning_rate, dropout_input,dropout_hidden, early_stopping_enabled, num_hidden_layers, width_hidden_layers, epochs
+
 
 
 def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
@@ -347,28 +347,6 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
 
     return epoch_accuracies_A1, epoch_accuracies_B1, epoch_accuracies_C1, epoch_accuracies_A2, epoch_accuracies_B2, epoch_accuracies_C2, epoch_accuracies_A3, epoch_accuracies_B3, epoch_accuracies_C3,  epoch_accuracies_A1_ewc, epoch_accuracies_B1_ewc, epoch_accuracies_C1_ewc, epoch_accuracies_A2_ewc, epoch_accuracies_B2_ewc, epoch_accuracies_C2_ewc, epoch_accuracies_A3_ewc, epoch_accuracies_B3_ewc, epoch_accuracies_C3_ewc, epoch_accuracies_A1_L2, epoch_accuracies_B1_L2, epoch_accuracies_C1_L2, epoch_accuracies_A2_L2, epoch_accuracies_B2_L2, epoch_accuracies_C2_L2, epoch_accuracies_A3_L2, epoch_accuracies_B3_L2, epoch_accuracies_C3_L2
 
-
-
-import random
-from sklearn.model_selection import train_test_split
-
-
-class EarlyStopping:
-    def __init__(self, patience=5):
-        self.patience = patience
-        self.counter = 0
-        self.best_loss = float("inf")
-        self.early_stop = False
-
-    def __call__(self, val_loss):
-        if val_loss < self.best_loss:
-            self.best_loss = val_loss
-            self.counter = 0
-        else:
-            self.counter += 1
-            if self.counter >= self.patience:
-                self.early_stop = True
-        return self.early_stop
 
 
 def run_experiment_2B(train_loaders, criterion, search_trials=50, patience=5):
