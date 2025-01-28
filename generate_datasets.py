@@ -59,7 +59,7 @@ class PermutedMNIST(Dataset):
         
         return permuted_image_tensor, label
     
-def permute_datasets(train_data, test_data):
+def permute_datasets(train_data, test_data, num_tasks=3):
     """
     Generates multiple permuted datasets for train and test sets.
     
@@ -74,7 +74,6 @@ def permute_datasets(train_data, test_data):
     task_datasets_permute_train = []
     task_datasets_permute_test = []
     
-    num_tasks = 3
     base_seed = 42
     for i in range(num_tasks):
         task_seed = base_seed + i
@@ -92,7 +91,7 @@ def permute_datasets(train_data, test_data):
     return task_datasets_permute_train, task_datasets_permute_test
 
 
-def rotate_datasets(train_data, test_data):
+def rotate_datasets(train_data, test_data, num_tasks=10):
     """ 
     Generates multiple rotated datasets for train and test sets.
     
@@ -106,7 +105,6 @@ def rotate_datasets(train_data, test_data):
     """   
     task_datasets_rotate_train = []
     task_datasets_rotate_test = []
-    num_tasks=10
 
     for i in range(num_tasks):
         degree = 30 * i #Each tasks rotate for degree given by this formula 
@@ -136,13 +134,14 @@ def create_task_dataloaders(task_datasets, batch_size=64):
         task_loaders.append(task_loader)
     return task_loaders
 
-
-
-
-def load_datasets():
+def load_datasets(num_tasks_permute=3, num_tasks_rotate=10):
     """
     Loads the MNIST dataset and generates permuted and rotated tasks.
     Creates DataLoaders for these tasks.
+    
+    Args:
+        num_tasks_permute: Number of permuted tasks.
+        num_tasks_rotate: Number of rotated tasks.
     
     Returns:
         permuted_train_loaders: List of DataLoaders for permuted training tasks.
@@ -154,10 +153,10 @@ def load_datasets():
     test_dataset = datasets.MNIST(root='./data', train=False, download=True)
 
     # Generate permuted datasets for both train and test
-    permuted_tasks_train, permuted_tasks_test = permute_datasets(train_dataset, test_dataset)
+    permuted_tasks_train, permuted_tasks_test = permute_datasets(train_dataset, test_dataset, num_tasks=num_tasks_permute)
 
     # Generate rotated datasets for both train and test
-    rotated_tasks_train, rotated_tasks_test = rotate_datasets(train_dataset, test_dataset)
+    rotated_tasks_train, rotated_tasks_test = rotate_datasets(train_dataset, test_dataset, num_tasks=num_tasks_rotate)
 
     # Create data loaders for permuted datasets
     permuted_train_loaders = create_task_dataloaders(permuted_tasks_train)
