@@ -80,7 +80,9 @@ produced by a fixed rotation of 10(i−1) degrees).
 
 
 ## Credits
-This work was carried out as part of a reproducibility challenge, to validate the findings presented in the study \cite{main}. We acknowledge the authors of the original paper for their contributions that inspired this reproduction effort. 
+This work was carried out as part of a reproducibility challenge, to validate the findings presented in the study (https://arxiv.org/pdf/1612.00796). We acknowledge the authors of the original paper for their contributions that inspired this reproduction effort. 
+
+
 This repository is based on a heavily modified fork of [pytorch-template](https://github.com/victoresque/pytorch-template) and [asr_project_template](https://github.com/WrathOfGrapes/asr_project_template) repositories.
 
 ## License
