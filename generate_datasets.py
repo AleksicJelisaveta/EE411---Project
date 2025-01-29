@@ -2,8 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import datasets, transforms
 import numpy as np
-import torchvision
-from PIL import Image
+
 
 class RotatedMNIST(Dataset):
     """
@@ -59,6 +58,7 @@ class PermutedMNIST(Dataset):
         
         return permuted_image_tensor, label
     
+    
 def permute_datasets(train_data, test_data, num_tasks=3):
     """
     Generates multiple permuted datasets for train and test sets.
@@ -66,6 +66,7 @@ def permute_datasets(train_data, test_data, num_tasks=3):
     Args:
         train_data: Training dataset.
         test_data: Testing dataset.
+        num_tasks: Number of permuted tasks.
     
     Returns:
         task_datasets_permute_train: List of permuted training datasets.
@@ -73,8 +74,8 @@ def permute_datasets(train_data, test_data, num_tasks=3):
     """
     task_datasets_permute_train = []
     task_datasets_permute_test = []
-    
     base_seed = 42
+
     for i in range(num_tasks):
         task_seed = base_seed + i
         rng = np.random.default_rng(task_seed)
@@ -98,6 +99,7 @@ def rotate_datasets(train_data, test_data, num_tasks=10):
     Args:
         train_data: Training dataset.
         test_data: Testing dataset.
+        num_tasks: Number of rotated tasks.
     
     Returns:
         task_datasets_rotate_train: List of rotated training datasets.
@@ -116,6 +118,7 @@ def rotate_datasets(train_data, test_data, num_tasks=10):
         task_datasets_rotate_test.append(rotated_data_test)
     
     return task_datasets_rotate_train, task_datasets_rotate_test
+
 
 def create_task_dataloaders(task_datasets, batch_size=64):
     """
