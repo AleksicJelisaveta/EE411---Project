@@ -59,7 +59,7 @@ def train_model_on_task(model,type, train_dataloader, test_dataloaderA, test_dat
             task_loss = criterion(outputs, targets)
 
             # Add regularization loss if applicable
-            ewc_loss = ewc.compute_ewc_loss(model) if ewc else 0.0
+            ewc_loss = ewc.compute_ewc_loss(model,lambda_ewc) if ewc else 0.0
             loss = task_loss + ewc_loss
 
             loss.backward()
@@ -187,7 +187,7 @@ def set_experiment_params(figure_type='2A'):
         early_stopping_enabled = False
         num_hidden_layers = 2
         width_hidden_layers = 400
-        epochs = 20
+        epochs = 3
     elif figure_type == '2B':
         learning_rate = np.logspace(-5, -3, 100)
         dropout_input = 0.2
@@ -195,7 +195,7 @@ def set_experiment_params(figure_type='2A'):
         early_stopping_enabled = True
         num_hidden_layers = 2
         width_hidden_layers = range(400,2000)
-        epochs = 100
+        epochs = 10
     elif figure_type == '2C':
         learning_rate = 1e-3
         dropout_input = 0.0
@@ -327,13 +327,13 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
     epoch_accuracies_A1_ewc, epoch_accuracies_B1_ewc, epoch_accuracies_C1_ewc = train_model_on_task(model_ewc, 'A', permuted_train_loaders[0], permuted_test_loaders[0], [], [], criterion, optimizer, epochs, early_stopping=early_stopping)
 
     ewc.compute_fisher(permuted_train_loaders[0])
-    ewc.update_params(model_ewc)
+    ewc.update_params()
 
     # Train on second task with EWC
     epoch_accuracies_A2_ewc, epoch_accuracies_B2_ewc, epoch_accuracies_C2_ewc = train_model_on_task(model_ewc, 'B', permuted_train_loaders[1], permuted_test_loaders[0], permuted_test_loaders[1], [], criterion, optimizer, epochs, ewc=ewc, lambda_ewc=500, early_stopping=early_stopping)
 
     ewc.compute_fisher(permuted_train_loaders[1])
-    ewc.update_params(model_ewc)
+    ewc.update_params()
 
     # Train on third task with EWC
     epoch_accuracies_A3_ewc, epoch_accuracies_B3_ewc, epoch_accuracies_C3_ewc = train_model_on_task(model_ewc, 'C', permuted_train_loaders[2], permuted_test_loaders[0], permuted_test_loaders[1], permuted_test_loaders[2], criterion, optimizer, epochs, ewc=ewc, lambda_ewc=500, early_stopping=early_stopping)
@@ -443,7 +443,7 @@ def run_experiment_2B_with_ewc(train_loaders, lambda_ewc=100, search_trials=50, 
                     ewc_optimizer.zero_grad()
                     ewc_outputs = ewc_model(inputs)
                     loss = criterion(ewc_outputs, targets)
-                    ewc_loss = loss + ewc.compute_ewc_loss(lambda_ewc)
+                    ewc_loss = loss + ewc.compute_ewc_loss(ewc_model)
                     ewc_loss.backward()
                     ewc_optimizer.step()
                     ewc_task_loss += loss.item()
@@ -643,7 +643,7 @@ def run_experiment_2B_with_ewc_and_plot(train_loaders, test_loaders,lambda_ewc=1
                         # EWC model training
                         ewc_optimizer.zero_grad()
                         ewc_outputs = ewc_model(inputs)
-                        ewc_loss = criterion(ewc_outputs, targets) + ewc.compute_ewc_loss(lambda_ewc)
+                        ewc_loss = criterion(ewc_outputs, targets) + ewc.compute_ewc_loss(ewc_model,lambda_ewc)
                         ewc_loss.backward()
                         ewc_optimizer.step()
 
@@ -704,7 +704,7 @@ def run_experiment_2B_with_ewc_and_plot(train_loaders, test_loaders,lambda_ewc=1
                 ewc_fraction_correct.append(np.mean(ewc_task_accuracy))
 
                 ewc.compute_fisher(task_loader)
-                ewc.update_params(ewc_model)
+                ewc.update_params()
 
             sgd_accuracies.append(sgd_fraction_correct)
             ewc_accuracies.append(ewc_fraction_correct)
