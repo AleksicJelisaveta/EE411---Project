@@ -39,12 +39,14 @@ class CustomNN(nn.Module):
         return self.network(x.view(x.size(0), -1))  # Flatten input
 
 
-def train_model_on_task(model,type, train_dataloader, test_dataloaderA, test_dataloaderB , test_dataloaderC, criterion, optimizer, epochs, ewc=None, lambda_ewc=0.0, early_stopping=None):
+def train_model_on_task(model, train_type_id, train_dataloader, test_dataloader, criterion, optimizer, epochs, ewc=None, lambda_ewc=0.0, early_stopping=None):
     model.train()
-    epoch_accuracies_A = []
-    epoch_accuracies_B = []
-    epoch_accuracies_C = []
     
+    accuracies = {}
+
+    for id in range(train_type_id):
+        accuracies[id] = []
+
     for epoch in range(epochs):
         total_loss = 0
         
@@ -70,89 +72,26 @@ def train_model_on_task(model,type, train_dataloader, test_dataloaderA, test_dat
        
         # calculate accuracy on test set per epoch
 
+        model.eval()
+        with torch.no_grad():
 
-        if type == 'A':
-            total = 0
-            correct = 0
-            for inputs, targets in test_dataloaderA:
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
+            for id in range(train_type_id):
+                total = 0
+                correct = 0
 
-            epoch_accuracy_A = correct / total    
-            epoch_accuracies_A.append(epoch_accuracy_A)
-            print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set A: {epoch_accuracy_A:.4f}")
+                for inputs, targets in test_dataloader[id]:
+                    outputs = model(inputs)
+                    _, predicted = outputs.max(1)
+                    total += targets.size(0)
+                    correct += (predicted == targets).sum().item()
 
-        if type == 'B':
-            total = 0
-            correct = 0
-            for inputs, targets in test_dataloaderB:
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
-
-            epoch_accuracy_B = correct / total    
-            epoch_accuracies_B.append(epoch_accuracy_B)
-            print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set B: {epoch_accuracy_B:.4f}")  
-
-            total = 0
-            correct = 0
-            for inputs, targets in test_dataloaderA:
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
-
-            epoch_accuracy_A = correct / total
-            epoch_accuracies_A.append(epoch_accuracy_A)
-            print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set A: {epoch_accuracy_A:.4f}")
-
-        if type == 'C':
-            total = 0
-            correct = 0
-            for inputs, targets in test_dataloaderC:
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
-
-            epoch_accuracy_C = correct / total    
-            epoch_accuracies_C.append(epoch_accuracy_C)
-            print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set C: {epoch_accuracy_C:.4f}")  
-
-            total = 0
-            correct = 0
-            for inputs, targets in test_dataloaderB:
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
-
-            epoch_accuracy_B = correct / total
-            epoch_accuracies_B.append(epoch_accuracy_B)
-            print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set B: {epoch_accuracy_B:.4f}")  
-
-            total = 0
-            correct = 0
-            for inputs, targets in test_dataloaderA:
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
-
-            epoch_accuracy_A = correct / total
-            epoch_accuracies_A.append(epoch_accuracy_A)
-            print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set A: {epoch_accuracy_A:.4f}")
-    
-
-        
-        
-
+                epoch_accuracy = correct / total
+                accuracies[id].append(epoch_accuracy)
+                print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set {id}: {epoch_accuracy:.4f}")
+                            
    
     print("\n")  
-    return epoch_accuracies_A, epoch_accuracies_B, epoch_accuracies_C   
+    return accuracies
 
 
 
@@ -304,17 +243,17 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
 
-        # Define early stopping
+    # Define early stopping
     early_stopping = EarlyStopping(patience=5) if early_stopping_enabled else None
 
-    # Train on first task
-    epoch_accuracies_A1, epoch_accuracies_B1, epoch_accuracies_C1 = train_model_on_task(model, 'A', permuted_train_loaders[0], permuted_test_loaders[0], [], [], criterion, optimizer, epochs, early_stopping=early_stopping)
+    epoch_accuracies_SGD = {}
+    epoch_accuracies_EWC = {}
+    epoch_accuracies_L2 = {}
 
-    # Train on second task
-    epoch_accuracies_A2, epoch_accuracies_B2, epoch_accuracies_C2 = train_model_on_task(model, 'B', permuted_train_loaders[1], permuted_test_loaders[0], permuted_test_loaders[1], [], criterion, optimizer, epochs, early_stopping=early_stopping)
-
-    # Train on third task
-    epoch_accuracies_A3, epoch_accuracies_B3, epoch_accuracies_C3 = train_model_on_task(model, 'C', permuted_train_loaders[2], permuted_test_loaders[0], permuted_test_loaders[1], permuted_test_loaders[2], criterion, optimizer, epochs, early_stopping=early_stopping)
+    for task_num in range(3):
+        epoch_accuracies_SGD[task_num] = train_model_on_task(model, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, early_stopping=early_stopping)
+    
+    print(epoch_accuracies_SGD)
 
     # Define EWC
     model_ewc = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden)
@@ -324,38 +263,25 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
 
     # Train on first task with EWC
     ewc = EWC(model_ewc)
-    epoch_accuracies_A1_ewc, epoch_accuracies_B1_ewc, epoch_accuracies_C1_ewc = train_model_on_task(model_ewc, 'A', permuted_train_loaders[0], permuted_test_loaders[0], [], [], criterion, optimizer, epochs, early_stopping=early_stopping)
 
-    ewc.compute_fisher(permuted_train_loaders[0])
-    ewc.update_params()
+    for task_num in range(3):
+        lambda_ewc = 500 if task_num != 0 else None
+        epoch_accuracies_EWC[task_num] = train_model_on_task(model_ewc, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, ewc=ewc, lambda_ewc=lambda_ewc, early_stopping=early_stopping)
+        
+        ewc.compute_fisher(permuted_train_loaders[task_num])
+        ewc.update_params()
 
-    # Train on second task with EWC
-    epoch_accuracies_A2_ewc, epoch_accuracies_B2_ewc, epoch_accuracies_C2_ewc = train_model_on_task(model_ewc, 'B', permuted_train_loaders[1], permuted_test_loaders[0], permuted_test_loaders[1], [], criterion, optimizer, epochs, ewc=ewc, lambda_ewc=500, early_stopping=early_stopping)
-
-    ewc.compute_fisher(permuted_train_loaders[1])
-    ewc.update_params()
-
-    # Train on third task with EWC
-    epoch_accuracies_A3_ewc, epoch_accuracies_B3_ewc, epoch_accuracies_C3_ewc = train_model_on_task(model_ewc, 'C', permuted_train_loaders[2], permuted_test_loaders[0], permuted_test_loaders[1], permuted_test_loaders[2], criterion, optimizer, epochs, ewc=ewc, lambda_ewc=500, early_stopping=early_stopping)
-
+    
     # Use L2 regularization
     model_l2 = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model_l2.parameters(), lr=learning_rate, weight_decay=1e-3)
     early_stopping = EarlyStopping(patience=5) if early_stopping_enabled else None
 
-    # Train on first task with L2 regularization
-    epoch_accuracies_A1_L2, epoch_accuracies_B1_L2, epoch_accuracies_C1_L2 = train_model_on_task(model_l2, 'A', permuted_train_loaders[0], permuted_test_loaders[0], [], [], criterion, optimizer, epochs, early_stopping=early_stopping)
-
-    # Train on second task with L2 regularization
-    epoch_accuracies_A2_L2, epoch_accuracies_B2_L2, epoch_accuracies_C2_L2 = train_model_on_task(model_l2, 'B', permuted_train_loaders[1], permuted_test_loaders[0], permuted_test_loaders[1], [], criterion, optimizer, epochs, early_stopping=early_stopping)
-
-    # Train on third task with L2 regularization
-    epoch_accuracies_A3_L2, epoch_accuracies_B3_L2, epoch_accuracies_C3_L2 = train_model_on_task(model_l2, 'C', permuted_train_loaders[2], permuted_test_loaders[0], permuted_test_loaders[1], permuted_test_loaders[2], criterion, optimizer, epochs, early_stopping=early_stopping)
-
+    for task_num in range(3):
+        epoch_accuracies_L2[task_num] = train_model_on_task(model_l2, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, early_stopping=early_stopping)
     
-    return epoch_accuracies_A1, epoch_accuracies_B1, epoch_accuracies_C1, epoch_accuracies_A2, epoch_accuracies_B2, epoch_accuracies_C2, epoch_accuracies_A3, epoch_accuracies_B3, epoch_accuracies_C3,  epoch_accuracies_A1_ewc, epoch_accuracies_B1_ewc, epoch_accuracies_C1_ewc, epoch_accuracies_A2_ewc, epoch_accuracies_B2_ewc, epoch_accuracies_C2_ewc, epoch_accuracies_A3_ewc, epoch_accuracies_B3_ewc, epoch_accuracies_C3_ewc, epoch_accuracies_A1_L2, epoch_accuracies_B1_L2, epoch_accuracies_C1_L2, epoch_accuracies_A2_L2, epoch_accuracies_B2_L2, epoch_accuracies_C2_L2, epoch_accuracies_A3_L2, epoch_accuracies_B3_L2, epoch_accuracies_C3_L2
-
+    return epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2
 
 
 
