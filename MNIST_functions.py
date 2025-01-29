@@ -222,7 +222,7 @@ def evaluate_model_on_task(model, dataloader):
     return correct / total
 
 
-def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
+def run_experiment_2A(permuted_train_loaders, permuted_test_loaders, num_tasks):
     learning_rate, dropout_input,dropout_hidden, early_stopping_enabled, num_hidden_layers, width_hidden_layers, epochs = set_experiment_params('2A')
     
     print(f"Learning rate: {learning_rate}, Dropout input: {dropout_input}, Dropout hidden: {dropout_hidden}, Early stopping: {early_stopping_enabled}, Num hidden layers: {num_hidden_layers}, Width hidden layers: {width_hidden_layers}, Epochs: {epochs}")
@@ -239,10 +239,9 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
     epoch_accuracies_EWC = {}
     epoch_accuracies_L2 = {}
 
-    for task_num in range(3):
+    for task_num in range(num_tasks):
         epoch_accuracies_SGD[task_num] = train_model_on_task(model, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, early_stopping=early_stopping)
     
-    print(epoch_accuracies_SGD)
 
     # Define EWC
     model_ewc = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden)
@@ -253,7 +252,7 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
     # Train on first task with EWC
     ewc = EWC(model_ewc)
 
-    for task_num in range(3):
+    for task_num in range(num_tasks):
         lambda_ewc = 500 if task_num != 0 else None
         epoch_accuracies_EWC[task_num] = train_model_on_task(model_ewc, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, ewc=ewc, lambda_ewc=lambda_ewc, early_stopping=early_stopping)
         
@@ -267,7 +266,7 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
     optimizer = optim.SGD(model_l2.parameters(), lr=learning_rate, weight_decay=1e-3)
     early_stopping = EarlyStopping(patience=5) if early_stopping_enabled else None
 
-    for task_num in range(3):
+    for task_num in range(num_tasks):
         epoch_accuracies_L2[task_num] = train_model_on_task(model_l2, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, early_stopping=early_stopping)
     
     return epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2
