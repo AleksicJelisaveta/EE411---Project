@@ -19,7 +19,7 @@ class EWC:
         """
         self.model = copy.deepcopy(model)
         self.device = device
-        self.params = {n: p for n, p in model.named_parameters() if p.requires_grad}
+        self.params = {n: p for n, p in self.model.named_parameters() if p.requires_grad}
         self.prev_params = {n: p.clone().detach() for n, p in self.params.items()}
         # Initialize Fisher Information matrix
         self.fisher = {n: torch.zeros_like(p, device=self.device) for n, p in self.params.items()}
