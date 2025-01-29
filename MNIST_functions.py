@@ -187,7 +187,7 @@ def set_experiment_params(figure_type='2A'):
         early_stopping_enabled = False
         num_hidden_layers = 2
         width_hidden_layers = 400
-        epochs = 3
+        epochs = 20
     elif figure_type == '2B':
         learning_rate = np.logspace(-5, -3, 100)
         dropout_input = 0.2
