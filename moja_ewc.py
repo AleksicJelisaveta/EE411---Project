@@ -42,7 +42,7 @@ class EWC:
             if p.requires_grad:
                 self._means[n] = p.clone().detach()
 
-    def compute_ewc_loss(self, model, lambda_ewc=1.0):
+    def compute_ewc_loss(self, model, lambda_ewc=10.0):
         """Compute EWC loss for the current model parameters."""
         if not self._means:
             return torch.tensor(0.0)  # No previous tasks, no regularization needed
