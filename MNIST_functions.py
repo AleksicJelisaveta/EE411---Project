@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, Subset
 from torchvision import datasets, transforms
 import numpy as np
-from elastic_weight_consolidation import EWC
+from moja_ewc import EWC
 import generate_datasets as gen_ds
 from sklearn.model_selection import train_test_split
 import random
@@ -59,7 +59,7 @@ def train_model_on_task(model,type, train_dataloader, test_dataloaderA, test_dat
             task_loss = criterion(outputs, targets)
 
             # Add regularization loss if applicable
-            ewc_loss = ewc.compute_ewc_loss(lambda_ewc) if ewc else 0.0
+            ewc_loss = ewc.compute_ewc_loss(model) if ewc else 0.0
             loss = task_loss + ewc_loss
 
             loss.backward()
