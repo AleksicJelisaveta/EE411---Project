@@ -125,7 +125,7 @@ def set_experiment_params(figure_type='2A'):
         early_stopping_enabled = False
         num_hidden_layers = 2
         width_hidden_layers = 400
-        epochs = 3
+        epochs = 20
     elif figure_type == '2B':
         learning_rate = np.logspace(-5, -3, 100)
         dropout_input = 0.2
@@ -134,14 +134,6 @@ def set_experiment_params(figure_type='2A'):
         num_hidden_layers = 2
         width_hidden_layers = range(400,2000)
         epochs = 10
-    elif figure_type == '2C':
-        learning_rate = 1e-3
-        dropout_input = 0.0
-        dropout_hidden = 0.0
-        early_stopping_enabled = False
-        num_hidden_layers = 6
-        width_hidden_layers = 100
-        epochs = 100
     else:
         raise ValueError(f"Unknown figure type: {figure_type}")
     
