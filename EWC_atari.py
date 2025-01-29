@@ -7,15 +7,17 @@ class ElasticWeightConsolidation:
         self.params = {n: p.clone().detach() for n, p in model.named_parameters()}
         self.fisher = {n: torch.zeros_like(p) for n, p in model.named_parameters()}
 
-    def update_fisher(self, data_loader, criterion):
+    def update_fisher(self, states, criterion):
         self.model.eval()
-        for inputs, targets in data_loader:
+        for state in states:
             self.model.zero_grad()
-            outputs = self.model(inputs)
-            loss = criterion(outputs, targets)
+            state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
+            outputs = self.model(state)
+            loss = criterion(outputs, outputs)  # Use outputs as targets for unsupervised learning
             loss.backward()
             for n, p in self.model.named_parameters():
-                self.fisher[n] += p.grad ** 2 / len(data_loader)
+                if p.grad is not None:
+                    self.fisher[n] += p.grad ** 2 / len(states)
 
     def penalty(self, model):
         loss = 0

@@ -4,6 +4,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, Subset
 from torchvision import datasets, transforms
 import numpy as np
+import copy
 
 
 class EWC:
@@ -16,12 +17,12 @@ class EWC:
             dataloader (torch.utils.data.DataLoader): DataLoader for the dataset of the previous task.
             device (str): Device to perform computations on ('cpu' or 'cuda').
         """
-        self.model = model
+        self.model = copy.deepcopy(model)
         self.device = device
-        self.params = {n: p for n, p in model.named_parameters() if p.requires_grad}
+        self.params = {n: p for n, p in self.model.named_parameters() if p.requires_grad}
+        self.prev_params = {n: p.clone().detach() for n, p in self.params.items()}
         # Initialize Fisher Information matrix
         self.fisher = {n: torch.zeros_like(p, device=self.device) for n, p in self.params.items()}
-        self.prev_params = None
 
     def compute_fisher(self, dataloader):
         """
@@ -50,7 +51,9 @@ class EWC:
 
             # Accumulate Fisher Information from gradients
             for n, p in self.params.items():
-                new_fisher[n] += p.grad ** 2 / len(dataloader)
+                if p.grad is not None:
+                    grad = torch.clamp(p.grad, min=-1e4, max=1e4)  # Clamp gradients
+                    new_fisher[n] += grad ** 2 / len(dataloader)
 
         # Update Fisher Information matrix
         for n in self.fisher.keys():
@@ -60,8 +63,9 @@ class EWC:
         """
         Store the current parameters of the model.
         """
+        self.model = copy.deepcopy(model)
         self.prev_params = {n: p.clone().detach() for n, p in self.params.items()}
-        self.params = {n: p for n, p in model.named_parameters() if p.requires_grad}
+        self.params = {n: p for n, p in self.model.named_parameters() if p.requires_grad}
 
     def compute_ewc_loss(self, lambda_ewc):
         """
