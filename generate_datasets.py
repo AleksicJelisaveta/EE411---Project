@@ -2,12 +2,20 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import datasets, transforms
 import numpy as np
+from scipy.ndimage import rotate
+import matplotlib.pyplot as plt
+import torch
+import numpy as np
+from torch.utils.data import Dataset
+import torchvision.transforms as transforms
+from PIL import Image
 
 class RotatedMNIST(Dataset):
     """
     Custom Dataset for RotatedMNIST
 
     Args:
+        data: The original MNIST dataset (as NumPy arrays).
         data: The original MNIST dataset (as NumPy arrays).
         degree: The angle (in degrees) to rotate the images.
     """
@@ -29,26 +37,25 @@ class RotatedMNIST(Dataset):
 
         return rotated_image_tensor, label
 
+
 class PermutedMNIST(Dataset):
     """
-    Custom Dataset for PermutedMNIST
+    Custom Dataset for PermutedMNIST with optional normalization.
 
     Args:
         data: The original MNIST dataset.
         permutation: A predefined pixel permutation (optional).
-                         If None, a random permutation is generated.
+                     If None, a random permutation is generated.
     """
-    def __init__(self, data, permutation=None):
+    def __init__(self, data, permutation=None, normalize=True):
         self.data = data
         self.permutation = permutation if permutation is not None else np.random.permutation(28*28)
-        self.transform = transforms.Compose([
-            transforms.ToTensor(),  # Convert image to tensor (scales pixel values to [0, 1])
-            # transforms.Normalize((0.1307,), (0.3081,)),  # Normalize image (mean, std for MNIST)
-        ])
-        
+        self.normalize = normalize
+        self.mean = 0.1307
+        self.std = 0.3081
+
     def __len__(self):
         return len(self.data)
-    
     def __getitem__(self, idx):
         img, label = self.data[idx]
         
@@ -59,6 +66,7 @@ class PermutedMNIST(Dataset):
         permuted_image_tensor = torch.tensor(permuted_image, dtype=torch.float32).unsqueeze(0)  
         
         return permuted_image_tensor, label
+
 
 
 def permute_datasets(train_data, test_data, num_tasks=3, base_seed=42):
@@ -179,3 +187,4 @@ def load_datasets(num_tasks_permute=3, num_tasks_rotate=10, base_seed=42):
     rotated_test_loaders = create_task_dataloaders(rotated_tasks_test)
 
     return permuted_train_loaders, permuted_test_loaders, rotated_train_loaders, rotated_test_loaders
+
