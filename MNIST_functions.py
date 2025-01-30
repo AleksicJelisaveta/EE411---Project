@@ -39,19 +39,30 @@ class CustomNN(nn.Module):
         return self.network(x.view(x.size(0), -1))  # Flatten input
 
 
-def train_model_on_task(model,type, train_dataloader, test_dataloaderA, test_dataloaderB , test_dataloaderC, criterion, optimizer, epochs, ewc=None, lambda_ewc=0.0, early_stopping=None):
+def train_model_on_task(model, task_type, train_dataloader, test_dataloaders, criterion, optimizer, epochs, ewc=None, lambda_ewc=0.0, early_stopping=None):
+    """
+    Train the model on a single task and evaluate on multiple test sets.
+
+    Args:
+        model: Neural network model.
+        task_type: Type of the task ('A', 'B', or 'C').
+        train_dataloader: DataLoader for training data.
+        test_dataloaders: Dictionary of DataLoaders for test data.
+        criterion: Loss function.
+        optimizer: Optimizer.
+        epochs: Number of epochs to train.
+        ewc: Elastic Weight Consolidation object (optional).
+        lambda_ewc: Regularization strength for EWC.
+        early_stopping: EarlyStopping object (optional).
+
+    Returns:
+        Dictionary of epoch accuracies for each test set.
+    """
     model.train()
-    epoch_accuracies_A = []
-    epoch_accuracies_B = []
-    epoch_accuracies_C = []
-    
+    epoch_accuracies = {i: [] for i in range(len(test_dataloaders))}
+
     for epoch in range(epochs):
         total_loss = 0
-        
-        # for each epoch print accuracy
-        accuracy = 0
-        total = 0
-        correct = 0
 
         for inputs, targets in train_dataloader:
             optimizer.zero_grad()
@@ -59,100 +70,33 @@ def train_model_on_task(model,type, train_dataloader, test_dataloaderA, test_dat
             task_loss = criterion(outputs, targets)
 
             # Add regularization loss if applicable
-            ewc_loss = ewc.compute_ewc_loss(model,lambda_ewc) if ewc else 0.0
+            ewc_loss = ewc.compute_ewc_loss(model, lambda_ewc) if ewc else 0.0
             loss = task_loss + ewc_loss
 
             loss.backward()
             optimizer.step()
             total_loss += task_loss.item()
-          
-       
-       
-        # calculate accuracy on test set per epoch
 
+        # Evaluate on test sets
+        model.eval()
+        with torch.no_grad():
+            for key, test_dataloader in enumerate(test_dataloaders):
+                total = 0
+                correct = 0
+                for inputs, targets in test_dataloader:
+                    outputs = model(inputs)
+                    _, predicted = outputs.max(1)
+                    total += targets.size(0)
+                    correct += (predicted == targets).sum().item()
 
-        if type == 'A':
-            total = 0
-            correct = 0
-            for inputs, targets in test_dataloaderA:
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
+                epoch_accuracy = correct / total
+                epoch_accuracies[key].append(epoch_accuracy)
+                print(f"Epoch {epoch + 1}/{epochs}, Accuracy on test set {key}: {epoch_accuracy:.4f}")
 
-            epoch_accuracy_A = correct / total    
-            epoch_accuracies_A.append(epoch_accuracy_A)
-            print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set A: {epoch_accuracy_A:.4f}")
+        model.train()
 
-        if type == 'B':
-            total = 0
-            correct = 0
-            for inputs, targets in test_dataloaderB:
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
-
-            epoch_accuracy_B = correct / total    
-            epoch_accuracies_B.append(epoch_accuracy_B)
-            print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set B: {epoch_accuracy_B:.4f}")  
-
-            total = 0
-            correct = 0
-            for inputs, targets in test_dataloaderA:
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
-
-            epoch_accuracy_A = correct / total
-            epoch_accuracies_A.append(epoch_accuracy_A)
-            print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set A: {epoch_accuracy_A:.4f}")
-
-        if type == 'C':
-            total = 0
-            correct = 0
-            for inputs, targets in test_dataloaderC:
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
-
-            epoch_accuracy_C = correct / total    
-            epoch_accuracies_C.append(epoch_accuracy_C)
-            print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set C: {epoch_accuracy_C:.4f}")  
-
-            total = 0
-            correct = 0
-            for inputs, targets in test_dataloaderB:
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
-
-            epoch_accuracy_B = correct / total
-            epoch_accuracies_B.append(epoch_accuracy_B)
-            print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set B: {epoch_accuracy_B:.4f}")  
-
-            total = 0
-            correct = 0
-            for inputs, targets in test_dataloaderA:
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
-
-            epoch_accuracy_A = correct / total
-            epoch_accuracies_A.append(epoch_accuracy_A)
-            print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set A: {epoch_accuracy_A:.4f}")
-    
-
-        
-        
-
-   
-    print("\n")  
-    return epoch_accuracies_A, epoch_accuracies_B, epoch_accuracies_C   
+    print("\n")
+    return epoch_accuracies
 
 
 
@@ -187,7 +131,7 @@ def set_experiment_params(figure_type='2A'):
         early_stopping_enabled = False
         num_hidden_layers = 2
         width_hidden_layers = 400
-        epochs = 3
+        epochs = 20
     elif figure_type == '2B':
         learning_rate = np.logspace(-5, -3, 100)
         dropout_input = 0.2
@@ -308,13 +252,13 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
     early_stopping = EarlyStopping(patience=5) if early_stopping_enabled else None
 
     # Train on first task
-    epoch_accuracies_A1, epoch_accuracies_B1, epoch_accuracies_C1 = train_model_on_task(model, 'A', permuted_train_loaders[0], permuted_test_loaders[0], [], [], criterion, optimizer, epochs, early_stopping=early_stopping)
+    #epoch_accuracies_A1, epoch_accuracies_B1, epoch_accuracies_C1 = train_model_on_task(model, 'A', permuted_train_loaders[0], permuted_test_loaders[0], [], [], criterion, optimizer, epochs, early_stopping=early_stopping)
 
     # Train on second task
-    epoch_accuracies_A2, epoch_accuracies_B2, epoch_accuracies_C2 = train_model_on_task(model, 'B', permuted_train_loaders[1], permuted_test_loaders[0], permuted_test_loaders[1], [], criterion, optimizer, epochs, early_stopping=early_stopping)
+    #epoch_accuracies_A2, epoch_accuracies_B2, epoch_accuracies_C2 = train_model_on_task(model, 'B', permuted_train_loaders[1], permuted_test_loaders[0], permuted_test_loaders[1], [], criterion, optimizer, epochs, early_stopping=early_stopping)
 
     # Train on third task
-    epoch_accuracies_A3, epoch_accuracies_B3, epoch_accuracies_C3 = train_model_on_task(model, 'C', permuted_train_loaders[2], permuted_test_loaders[0], permuted_test_loaders[1], permuted_test_loaders[2], criterion, optimizer, epochs, early_stopping=early_stopping)
+    #epoch_accuracies_A3, epoch_accuracies_B3, epoch_accuracies_C3 = train_model_on_task(model, 'C', permuted_train_loaders[2], permuted_test_loaders[0], permuted_test_loaders[1], permuted_test_loaders[2], criterion, optimizer, epochs, early_stopping=early_stopping)
 
     # Define EWC
     model_ewc = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden)
@@ -324,19 +268,19 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
 
     # Train on first task with EWC
     ewc = EWC(model_ewc)
-    epoch_accuracies_A1_ewc, epoch_accuracies_B1_ewc, epoch_accuracies_C1_ewc = train_model_on_task(model_ewc, 'A', permuted_train_loaders[0], permuted_test_loaders[0], [], [], criterion, optimizer, epochs, early_stopping=early_stopping)
+    epoch_accuracies = train_model_on_task(model_ewc, 'A', permuted_train_loaders[0], permuted_test_loaders, criterion, optimizer, epochs, ewc=ewc, lambda_ewc=500, early_stopping=early_stopping)
 
     ewc.compute_fisher(permuted_train_loaders[0])
     ewc.update_params()
 
     # Train on second task with EWC
-    epoch_accuracies_A2_ewc, epoch_accuracies_B2_ewc, epoch_accuracies_C2_ewc = train_model_on_task(model_ewc, 'B', permuted_train_loaders[1], permuted_test_loaders[0], permuted_test_loaders[1], [], criterion, optimizer, epochs, ewc=ewc, lambda_ewc=500, early_stopping=early_stopping)
+    epoch_accuracies.update(train_model_on_task(model_ewc, 'B', permuted_train_loaders[1], permuted_test_loaders, criterion, optimizer, epochs, ewc=ewc, lambda_ewc=500, early_stopping=early_stopping))
 
     ewc.compute_fisher(permuted_train_loaders[1])
     ewc.update_params()
 
     # Train on third task with EWC
-    epoch_accuracies_A3_ewc, epoch_accuracies_B3_ewc, epoch_accuracies_C3_ewc = train_model_on_task(model_ewc, 'C', permuted_train_loaders[2], permuted_test_loaders[0], permuted_test_loaders[1], permuted_test_loaders[2], criterion, optimizer, epochs, ewc=ewc, lambda_ewc=500, early_stopping=early_stopping)
+    epoch_accuracies.update(train_model_on_task(model_ewc, 'C', permuted_train_loaders[2], permuted_test_loaders, criterion, optimizer, epochs, ewc=ewc, lambda_ewc=500, early_stopping=early_stopping))
 
     # Use L2 regularization
     model_l2 = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden)
@@ -345,17 +289,16 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders):
     early_stopping = EarlyStopping(patience=5) if early_stopping_enabled else None
 
     # Train on first task with L2 regularization
-    epoch_accuracies_A1_L2, epoch_accuracies_B1_L2, epoch_accuracies_C1_L2 = train_model_on_task(model_l2, 'A', permuted_train_loaders[0], permuted_test_loaders[0], [], [], criterion, optimizer, epochs, early_stopping=early_stopping)
+    #epoch_accuracies_A1_L2, epoch_accuracies_B1_L2, epoch_accuracies_C1_L2 = train_model_on_task(model_l2, 'A', permuted_train_loaders[0], permuted_test_loaders[0], [], [], criterion, optimizer, epochs, early_stopping=early_stopping)
 
     # Train on second task with L2 regularization
-    epoch_accuracies_A2_L2, epoch_accuracies_B2_L2, epoch_accuracies_C2_L2 = train_model_on_task(model_l2, 'B', permuted_train_loaders[1], permuted_test_loaders[0], permuted_test_loaders[1], [], criterion, optimizer, epochs, early_stopping=early_stopping)
+    #epoch_accuracies_A2_L2, epoch_accuracies_B2_L2, epoch_accuracies_C2_L2 = train_model_on_task(model_l2, 'B', permuted_train_loaders[1], permuted_test_loaders[0], permuted_test_loaders[1], [], criterion, optimizer, epochs, early_stopping=early_stopping)
 
     # Train on third task with L2 regularization
-    epoch_accuracies_A3_L2, epoch_accuracies_B3_L2, epoch_accuracies_C3_L2 = train_model_on_task(model_l2, 'C', permuted_train_loaders[2], permuted_test_loaders[0], permuted_test_loaders[1], permuted_test_loaders[2], criterion, optimizer, epochs, early_stopping=early_stopping)
+    #epoch_accuracies_A3_L2, epoch_accuracies_B3_L2, epoch_accuracies_C3_L2 = train_model_on_task(model_l2, 'C', permuted_train_loaders[2], permuted_test_loaders[0], permuted_test_loaders[1], permuted_test_loaders[2], criterion, optimizer, epochs, early_stopping=early_stopping)
 
     
-    return epoch_accuracies_A1, epoch_accuracies_B1, epoch_accuracies_C1, epoch_accuracies_A2, epoch_accuracies_B2, epoch_accuracies_C2, epoch_accuracies_A3, epoch_accuracies_B3, epoch_accuracies_C3,  epoch_accuracies_A1_ewc, epoch_accuracies_B1_ewc, epoch_accuracies_C1_ewc, epoch_accuracies_A2_ewc, epoch_accuracies_B2_ewc, epoch_accuracies_C2_ewc, epoch_accuracies_A3_ewc, epoch_accuracies_B3_ewc, epoch_accuracies_C3_ewc, epoch_accuracies_A1_L2, epoch_accuracies_B1_L2, epoch_accuracies_C1_L2, epoch_accuracies_A2_L2, epoch_accuracies_B2_L2, epoch_accuracies_C2_L2, epoch_accuracies_A3_L2, epoch_accuracies_B3_L2, epoch_accuracies_C3_L2
-
+    return epoch_accuracies
 
 
 
