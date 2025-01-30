@@ -1,14 +1,17 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader, Subset
+from torch.utils.data import Dataset, DataLoader, Subset, random_split
 from torchvision import datasets, transforms
 import numpy as np
-from moja_ewc import EWC
+from ewc import EWC
 import generate_datasets as gen_ds
 from sklearn.model_selection import train_test_split
 import random
 import matplotlib.pyplot as plt
+
+#Set device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class CustomNN(nn.Module):
     def __init__(self, num_hidden_layers=2, hidden_size=400, input_size=28*28, output_size=10, dropout_input=0.2, dropout_hidden=0.5):
@@ -31,21 +34,19 @@ class CustomNN(nn.Module):
 
         # Output layer
         layers.append(nn.Linear(hidden_size, output_size))
+        
 
         # Combine all layers
-        self.network = nn.Sequential(*layers)
+        self.network = nn.Sequential(*layers).to(device)
 
     def forward(self, x):
-        return self.network(x.view(x.size(0), -1))  # Flatten input
+        return self.network(x.view(x.size(0), -1).to(device))  # Flatten input
 
 
 def train_model_on_task(model, train_type_id, train_dataloader, test_dataloader, criterion, optimizer, epochs, ewc=None, lambda_ewc=0.0, early_stopping=None):
     model.train()
     
-    accuracies = {}
-
-    for id in range(train_type_id):
-        accuracies[id] = []
+    accuracies = {id: [] for id in range(train_type_id)}
 
     for epoch in range(epochs):
         total_loss = 0
@@ -56,6 +57,7 @@ def train_model_on_task(model, train_type_id, train_dataloader, test_dataloader,
         correct = 0
 
         for inputs, targets in train_dataloader:
+            inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
             task_loss = criterion(outputs, targets)
@@ -69,7 +71,6 @@ def train_model_on_task(model, train_type_id, train_dataloader, test_dataloader,
             total_loss += task_loss.item()
           
        
-       
         # calculate accuracy on test set per epoch
 
         model.eval()
@@ -80,6 +81,7 @@ def train_model_on_task(model, train_type_id, train_dataloader, test_dataloader,
                 correct = 0
 
                 for inputs, targets in test_dataloader[id]:
+                    inputs, targets = inputs.to(device), targets.to(device)
                     outputs = model(inputs)
                     _, predicted = outputs.max(1)
                     total += targets.size(0)
@@ -88,9 +90,7 @@ def train_model_on_task(model, train_type_id, train_dataloader, test_dataloader,
                 epoch_accuracy = correct / total
                 accuracies[id].append(epoch_accuracy)
                 print(f"Epoch {epoch+1}/{epochs}, Accuracy on test set {id}: {epoch_accuracy:.4f}")
-                            
-   
-    print("\n")  
+
     return accuracies
 
 
@@ -109,14 +109,14 @@ class EarlyStopping:
     def __call__(self, val_loss):
         if val_loss < self.best_loss:
             self.best_loss = val_loss
-            self.counter = 0  # Reset counter if validation loss improves
+            self.counter = 0  
         else:
             self.counter += 1
             if self.counter >= self.patience:
                 self.early_stop = True
         return self.early_stop
         
-    # Set hyperparameters
+# Set hyperparameters
 def set_experiment_params(figure_type='2A'):
     if figure_type == '2A':
         learning_rate = 1e-3
@@ -133,78 +133,11 @@ def set_experiment_params(figure_type='2A'):
         early_stopping_enabled = True
         num_hidden_layers = 2
         width_hidden_layers = range(400,2000)
-        epochs = 10
+        epochs = 20
     else:
         raise ValueError(f"Unknown figure type: {figure_type}")
     
     return learning_rate, dropout_input,dropout_hidden, early_stopping_enabled, num_hidden_layers, width_hidden_layers, epochs
-
-
-def train_model_on_tasks(model, train_loaders, criterion, optimizer, epochs_per_task, ewc=None, lambda_ewc=0.0, patience=5):
-    """
-    Train the model sequentially on a list of tasks, transitioning to the next task when early stopping is triggered.
-
-    Args:
-        model: Neural network model.
-        train_loaders: List of DataLoaders, where each DataLoader corresponds to a task.
-        criterion: Loss function.
-        optimizer: Optimizer.
-        epochs_per_task: Number of epochs allocated for each task.
-        ewc: Elastic Weight Consolidation object (optional).
-        lambda_ewc: Regularization strength for EWC.
-        patience: Number of epochs for early stopping.
-    """
-    for task_id, task_loader in enumerate(train_loaders, 1):
-        print(f"Training on Task {task_id}")
-
-        # Split task_loader dataset into training and validation sets
-        task_indices = list(range(len(task_loader.dataset)))
-        train_indices, val_indices = train_test_split(task_indices, test_size=0.2, shuffle=True)
-        train_subset = Subset(task_loader.dataset, train_indices)
-        val_subset = Subset(task_loader.dataset, val_indices)
-        train_task_loader = DataLoader(train_subset, batch_size=task_loader.batch_size, shuffle=True)
-        val_task_loader = DataLoader(val_subset, batch_size=task_loader.batch_size, shuffle=False)
-
-        # Initialize early stopping
-        early_stopping = EarlyStopping(patience=patience)
-
-        # Training loop for the current task
-        for epoch in range(epochs_per_task):
-            total_loss = 0.0
-            model.train()
-
-            # Training phase
-            for inputs, targets in train_task_loader:
-                inputs, targets = inputs.to(next(model.parameters()).device), targets.to(next(model.parameters()).device)
-                optimizer.zero_grad()
-                outputs = model(inputs)
-                task_loss = criterion(outputs, targets)
-
-                # Add EWC loss if applicable
-                ewc_loss = ewc.compute_ewc_loss(lambda_ewc) if ewc else 0.0
-                loss = task_loss + ewc_loss
-
-                loss.backward()
-                optimizer.step()
-                total_loss += task_loss.item()
-
-            print(f"Task {task_id}, Epoch {epoch + 1}/{epochs_per_task}, Loss: {total_loss / len(train_task_loader):.4f}")
-
-            # Validation phase
-            val_loss = 0.0
-            model.eval()
-            with torch.no_grad():
-                for inputs, targets in val_task_loader:
-                    inputs, targets = inputs.to(next(model.parameters()).device), targets.to(next(model.parameters()).device)
-                    outputs = model(inputs)
-                    val_loss += criterion(outputs, targets).item()
-            val_loss /= len(val_task_loader)
-            print(f"Validation Loss on Task {task_id}, Epoch {epoch + 1}: {val_loss:.4f}")
-
-            # Check for early stopping
-            if early_stopping(val_loss):
-                print(f"Early stopping triggered on Task {task_id}. Moving to the next task.\n")
-                break
 
 
 # Evaluate model after training on a task
@@ -214,6 +147,7 @@ def evaluate_model_on_task(model, dataloader):
     total = 0
     with torch.no_grad():
         for inputs, targets in dataloader:
+            inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             _, predicted = outputs.max(1)
             total += targets.size(0)
@@ -228,7 +162,7 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders, num_tasks):
     print(f"Learning rate: {learning_rate}, Dropout input: {dropout_input}, Dropout hidden: {dropout_hidden}, Early stopping: {early_stopping_enabled}, Num hidden layers: {num_hidden_layers}, Width hidden layers: {width_hidden_layers}, Epochs: {epochs}")
 
     # Define model
-    model = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden)
+    model = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
 
@@ -244,12 +178,11 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders, num_tasks):
     
 
     # Define EWC
-    model_ewc = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden)
+    model_ewc = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model_ewc.parameters(), lr=learning_rate)
     early_stopping = EarlyStopping(patience=5) if early_stopping_enabled else None
 
-    # Train on first task with EWC
     ewc = EWC(model_ewc)
 
     for task_num in range(num_tasks):
@@ -261,7 +194,7 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders, num_tasks):
 
     
     # Use L2 regularization
-    model_l2 = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden)
+    model_l2 = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model_l2.parameters(), lr=learning_rate, weight_decay=1e-3)
     early_stopping = EarlyStopping(patience=5) if early_stopping_enabled else None
@@ -272,7 +205,7 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders, num_tasks):
     return epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2
 
 
-def run_experiment_2B(train_loaders, test_loaders,lambda_ewc=100, search_trials=5, patience=5):
+def run_experiment_2B(train_loaders, test_loaders,lambda_ewc=100, search_trials=10, patience=5):
     
         criterion = nn.CrossEntropyLoss()
 
@@ -298,14 +231,14 @@ def run_experiment_2B(train_loaders, test_loaders,lambda_ewc=100, search_trials=
                 hidden_size=hidden_layer_width,
                 dropout_input=dropout_input,
                 dropout_hidden=dropout_hidden
-            )
+            ).to(device)
 
             ewc_model = CustomNN(
                 num_hidden_layers=num_hidden_layers,
                 hidden_size=hidden_layer_width,
                 dropout_input=dropout_input,
                 dropout_hidden=dropout_hidden
-            )
+            ).to(device)
 
             ewc = EWC(ewc_model)
 
@@ -319,7 +252,6 @@ def run_experiment_2B(train_loaders, test_loaders,lambda_ewc=100, search_trials=
             for task_id, task_loader in enumerate(train_loaders, 1):
                 print(f"Training on Task {task_id}")
 
-                # Split task_loader dataset into train and validation sets
                 task_indices = list(range(len(task_loader.dataset)))
                 train_indices, val_indices = train_test_split(task_indices, test_size=0.2, shuffle=True)
                 train_subset = Subset(task_loader.dataset, train_indices)
@@ -327,7 +259,6 @@ def run_experiment_2B(train_loaders, test_loaders,lambda_ewc=100, search_trials=
                 train_task_loader = DataLoader(train_subset, batch_size=task_loader.batch_size, shuffle=True)
                 val_task_loader = DataLoader(val_subset, batch_size=task_loader.batch_size, shuffle=False)
 
-                # Initialize early stopping
                 early_stopping_sgd = EarlyStopping(patience=patience)
                 early_stopping_ewc = EarlyStopping(patience=patience)
 
@@ -339,14 +270,14 @@ def run_experiment_2B(train_loaders, test_loaders,lambda_ewc=100, search_trials=
                     for inputs, targets in train_task_loader:
                         inputs, targets = inputs.to(next(sgd_model.parameters()).device), targets.to(next(sgd_model.parameters()).device)
 
-                        # SGD model training
+                      
                         sgd_optimizer.zero_grad()
                         sgd_outputs = sgd_model(inputs)
                         sgd_loss = criterion(sgd_outputs, targets)
                         sgd_loss.backward()
                         sgd_optimizer.step()
 
-                        # EWC model training
+                  
                         ewc_optimizer.zero_grad()
                         ewc_outputs = ewc_model(inputs)
                         ewc_loss = criterion(ewc_outputs, targets) + ewc.compute_ewc_loss(ewc_model,lambda_ewc)
@@ -361,22 +292,21 @@ def run_experiment_2B(train_loaders, test_loaders,lambda_ewc=100, search_trials=
                     sgd_correct, ewc_correct = 0, 0
                     sgd_model.eval()
                     ewc_model.eval()
+
                     with torch.no_grad():
                         for inputs, targets in val_task_loader:
                             inputs, targets = inputs.to(next(sgd_model.parameters()).device), targets.to(next(sgd_model.parameters()).device)
 
-                            # SGD model validation
+                            
                             sgd_outputs = sgd_model(inputs)
                             sgd_correct += (sgd_outputs.argmax(dim=1) == targets).sum().item()
 
-                            # EWC model validation
                             ewc_outputs = ewc_model(inputs)
                             ewc_correct += (ewc_outputs.argmax(dim=1) == targets).sum().item()
 
                     sgd_val_accuracy = sgd_correct / len(val_subset)
                     ewc_val_accuracy = ewc_correct / len(val_subset)
 
-                    # Check early stopping
                     if early_stopping_enabled and early_stopping_sgd(1 - sgd_val_accuracy):
                         print(f"SGD Early stopping triggered on Task {task_id}. Moving to the next task.\n")
                         break
@@ -385,7 +315,6 @@ def run_experiment_2B(train_loaders, test_loaders,lambda_ewc=100, search_trials=
                         print(f"EWC Early stopping triggered on Task {task_id}. Moving to the next task.\n")
                         break
 
-                # Evaluate performance on all seen tasks
                 sgd_task_accuracy = []
                 ewc_task_accuracy = []
                 for prev_task_id, prev_task_loader in enumerate(test_loaders[:task_id], 1):
