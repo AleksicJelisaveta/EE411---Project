@@ -186,7 +186,7 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders, num_tasks):
     ewc = EWC(model_ewc)
 
     for task_num in range(num_tasks):
-        lambda_ewc = 500 if task_num != 0 else None
+        lambda_ewc = 10000 if task_num != 0 else None
         epoch_accuracies_EWC[task_num] = train_model_on_task(model_ewc, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, ewc=ewc, lambda_ewc=lambda_ewc, early_stopping=early_stopping)
         
         ewc.compute_fisher(permuted_train_loaders[task_num])
