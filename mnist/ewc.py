@@ -13,28 +13,19 @@ class EWC:
         self.model.eval()
         
         # Reset precision matrix before accumulation
-        for n in self._precision_matrices:
-            self._precision_matrices[n].zero_()
-
-        total_samples = 0
+        # for n in self._precision_matrices:
+        #     self._precision_matrices[n].zero_()
         
         for inputs, labels in data_loader:
             self.model.zero_grad()
             
             outputs = self.model(inputs)
-            loss = F.nll_loss(F.log_softmax(outputs, dim=1), labels)  # Ensure log-probs for nll_loss
+            loss = F.nll_loss(F.log_softmax(outputs, dim=1), labels)
             loss.backward()
             
-            batch_size = inputs.shape[0]
-            total_samples += batch_size
-
             for n, p in self.model.named_parameters():
                 if p.requires_grad and p.grad is not None:
-                    self._precision_matrices[n] += (p.grad ** 2) * batch_size  # Weight by batch size
-        
-        # Normalize over total samples
-        for n in self._precision_matrices:
-            self._precision_matrices[n] /= total_samples
+                    self._precision_matrices[n] += (p.grad ** 2) / len(data_loader)
 
     def update_params(self):
         """Store the mean parameter values after training on a task."""
