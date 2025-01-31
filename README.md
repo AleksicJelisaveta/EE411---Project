@@ -62,8 +62,8 @@ The method used in this project is based on the Elastic Weight Consolidation (EW
 
 4. **Experiments**:
    - Two main experiments are conducted to reproduce the results from the original paper:
-     - **Experiment 2A**: Evaluates the performance of models trained with SGD, L2 regularization, and EWC on permuted MNIST tasks. This is executed using the function [`run_experiment_2A`](MNIST_functions.py).
-     - **Experiment 2B**: Evaluates the performance of models trained with SGD and EWC on rotated MNIST tasks with hyperparameter search. This is executed using the function [`run_experiment_2B`](MNIST_functions.py).
+     - **Experiment 2A**: Evaluates the performance of models trained with SGD, L2 regularization, and EWC on permuted and rotated MNIST tasks. This is executed using the function [`run_experiment_2A`](MNIST_functions.py).
+     - **Experiment 2B**: Evaluates the performance of models trained with SGD and EWC on rotated and permuted MNIST tasks with hyperparameter search. This is executed using the function [`run_experiment_2B`](MNIST_functions.py).
 
 5. **Execution**:
    - The main script [`run.py`](run.py) handles the execution of experiments based on command-line arguments, loading datasets, and saving results.
@@ -178,11 +178,11 @@ This work was carried out as part of a reproducibility challenge, to validate th
 
 ## Group Contributions
 
-- Jelisaveta Aleksic: Scripts for generating datasets and training, running experiments for 2A rotated and permutated MNIST, writing README
-- Natasa Jovanovic: Implementing and experimenting with DDQN and EWC for Atari games, refactoring the code for running the 2A and 2B experiments, running 2B experiments for permutated and rotated MNIST, writing report, writing run script
+- Jelisaveta Aleksić: Scripts for generating datasets and training, running experiments for 2A rotated and permutated MNIST, writing README
+- Natasa Jovanović: Implementing and experimenting with DDQN and EWC for Atari games, refactoring the code for running the 2A and 2B experiments, running 2B experiments for permutated and rotated MNIST, writing report, writing run script
 - Marija Rakonjac: Scripts for experimenting and visualizing results, implementing models, writing report
-- Strahinja Nikolic: EWC implementation, running experiments for 2A permutated MNIST, writing README, cleaning code, reviewing report
-- Milica Vukasinovic: Scripts for training and running experiments, EWC implementation, writing report
+- Strahinja Nikolić: EWC implementation, running experiments for 2A permutated MNIST, writing README, cleaning code, reviewing report
+- Milica Vukasinović: Scripts for training and running experiments, EWC implementation, writing report
 
 ## License
 
