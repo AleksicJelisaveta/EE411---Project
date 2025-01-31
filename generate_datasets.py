@@ -50,9 +50,6 @@ class PermutedMNIST(Dataset):
     def __init__(self, data, permutation=None, normalize=True):
         self.data = data
         self.permutation = permutation if permutation is not None else np.random.permutation(28*28)
-        self.normalize = normalize
-        self.mean = 0.1307
-        self.std = 0.3081
 
     def __len__(self):
         return len(self.data)
