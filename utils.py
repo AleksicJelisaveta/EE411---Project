@@ -22,10 +22,6 @@ def extract_epoch_accuracies(file_path):
             epoch_accuracies_L2[task].append(list(subset['L2_Accuracy']))
     
     return epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2
-    
-
-import numpy as np
-import matplotlib.pyplot as plt
 
 def plot_experiment_2A(epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2):
     def flatten(lst):
