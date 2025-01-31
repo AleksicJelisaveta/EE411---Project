@@ -31,9 +31,6 @@ class RotatedMNIST(Dataset):
 
         img = np.array(img, dtype=np.float32)
 
-        # normalization
-        img = (img - np.min(img)) / (np.max(img) - np.min(img))
-
         rotated_image = rotate(img, self.rotation_degree, reshape = False)
 
         rotated_image_tensor = torch.tensor(rotated_image, dtype=torch.float32).unsqueeze(0)  
