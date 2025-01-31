@@ -47,11 +47,6 @@ def main():
         plot_experiment_2A(epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2, title)
 
     elif args.experiment == 'B':
-
-        if args.task_type == 'permute':
-            title = "Fraction Correct vs Number of Tasks for PermutedMNIST"
-        elif args.task_type == 'rotate':
-            title = "Fraction Correct vs Number of Tasks for RotatedMNIST"
         avg_sgd_accuracy, avg_ewc_accuracy = run_experiment_2B(train_loaders, test_loaders, args.num_tasks, args.lambda_ewc)
         save_fraction_correct_results(avg_ewc_accuracy, avg_sgd_accuracy, args.num_tasks, 'experiment_B_results.csv')
         plot_fraction_correct_results(avg_ewc_accuracy, avg_sgd_accuracy, args.num_tasks, title)
