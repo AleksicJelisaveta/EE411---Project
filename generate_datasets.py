@@ -16,6 +16,7 @@ class RotatedMNIST(Dataset):
 
     Args:
         data: The original MNIST dataset (as NumPy arrays).
+        data: The original MNIST dataset (as NumPy arrays).
         degree: The angle (in degrees) to rotate the images.
     """
     def __init__(self, data, degree):

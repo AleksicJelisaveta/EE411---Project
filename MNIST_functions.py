@@ -125,6 +125,7 @@ def set_experiment_params(figure_type='2A'):
         early_stopping_enabled = False
         num_hidden_layers = 2
         width_hidden_layers = 400
+        lambda_ewc = 10000
         epochs = 20
     elif figure_type == '2B':
         learning_rate = np.logspace(-5, -3, 100)
@@ -133,11 +134,12 @@ def set_experiment_params(figure_type='2A'):
         early_stopping_enabled = True
         num_hidden_layers = 2
         width_hidden_layers = range(400,2000)
+        lambda_ewc = 10000
         epochs = 20
     else:
         raise ValueError(f"Unknown figure type: {figure_type}")
     
-    return learning_rate, dropout_input,dropout_hidden, early_stopping_enabled, num_hidden_layers, width_hidden_layers, epochs
+    return learning_rate, dropout_input,dropout_hidden, early_stopping_enabled, num_hidden_layers, width_hidden_layers, lambda_ewc, epochs
 
 
 # Evaluate model after training on a task
@@ -157,25 +159,13 @@ def evaluate_model_on_task(model, dataloader):
 
 
 def run_experiment_2A(permuted_train_loaders, permuted_test_loaders, num_tasks):
-    learning_rate, dropout_input,dropout_hidden, early_stopping_enabled, num_hidden_layers, width_hidden_layers, epochs = set_experiment_params('2A')
+    learning_rate, dropout_input,dropout_hidden, early_stopping_enabled, num_hidden_layers, width_hidden_layers, lambda_ewc, epochs = set_experiment_params('2A')
     
-    print(f"Learning rate: {learning_rate}, Dropout input: {dropout_input}, Dropout hidden: {dropout_hidden}, Early stopping: {early_stopping_enabled}, Num hidden layers: {num_hidden_layers}, Width hidden layers: {width_hidden_layers}, Epochs: {epochs}")
-
-    # Define model
-    model = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden).to(device)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-
-    # Define early stopping
-    early_stopping = EarlyStopping(patience=5) if early_stopping_enabled else None
+    print(f"Learning rate: {learning_rate}, Dropout input: {dropout_input}, Dropout hidden: {dropout_hidden}, Early stopping: {early_stopping_enabled}, Num hidden layers: {num_hidden_layers}, Width hidden layers: {width_hidden_layers}, Lambda {lambda_ewc}, Epochs: {epochs}")
 
     epoch_accuracies_SGD = {}
     epoch_accuracies_EWC = {}
     epoch_accuracies_L2 = {}
-
-    for task_num in range(num_tasks):
-        epoch_accuracies_SGD[task_num] = train_model_on_task(model, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, early_stopping=early_stopping)
-    
 
     # Define EWC
     model_ewc = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden).to(device)
@@ -186,11 +176,22 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders, num_tasks):
     ewc = EWC(model_ewc)
 
     for task_num in range(num_tasks):
-        lambda_ewc = 10000 if task_num != 0 else None
         epoch_accuracies_EWC[task_num] = train_model_on_task(model_ewc, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, ewc=ewc, lambda_ewc=lambda_ewc, early_stopping=early_stopping)
         
         ewc.compute_fisher(permuted_train_loaders[task_num])
         ewc.update_params()
+
+    # Define model
+    model = CustomNN(num_hidden_layers=num_hidden_layers, hidden_size=width_hidden_layers, dropout_input=dropout_input, dropout_hidden=dropout_hidden).to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+
+    # Define early stopping
+    early_stopping = EarlyStopping(patience=5) if early_stopping_enabled else None
+
+
+    for task_num in range(num_tasks):
+        epoch_accuracies_SGD[task_num] = train_model_on_task(model, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, early_stopping=early_stopping)
 
     
     # Use L2 regularization
