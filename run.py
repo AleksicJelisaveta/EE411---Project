@@ -45,6 +45,7 @@ def main():
 
         epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2 = run_experiment_2A(train_loaders, test_loaders, args.num_tasks)
         save_experiment_results_2A('experiment_A_results.csv', epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2)
+        epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2 = extract_epoch_accuracies('experiment_A_results.csv')
         plot_experiment_2A(epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2, title)
 
     elif args.experiment == 'B':
