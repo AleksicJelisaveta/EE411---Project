@@ -154,10 +154,10 @@ For additional modifications of the neural network parameters, refer to the [`MN
 In Experiment 2A, we evaluated the performance of models trained with SGD, L2 regularization, and EWC on permuted and rotated MNIST tasks. The results are shown in the following figures:
 
 #### PermutedMNIST
-![Results for permuted MNIST](results/acc_2a_10k.png)
+![Results for permuted MNIST](results/2A_permutated.png)
 
 #### RotatedMNIST
-![Results for rotated MNIST](results/fraction_correct_rotate.png)
+![Results for rotated MNIST](results/2A_rotated.png)
 
 ### Experiment 2B: Average Performance Across All Tasks
 
@@ -175,6 +175,14 @@ The results demonstrate that EWC effectively mitigates catastrophic forgetting c
 ## Credits
 This work was carried out as part of a reproducibility challenge, to validate the findings presented in the study (https://arxiv.org/pdf/1612.00796). We acknowledge the authors of the original paper for their contributions that inspired this reproduction effort. 
 
+
+## Group Contributions
+
+- Jelisaveta Aleksic: 
+- Natasa Jovanovic: 
+- Marija Rakonjac: 
+- Strahinja Nikolic: EWC implementation and debugging, running experiments for 2A permutated MNIST, writing README, cleaning code, reviewing report
+- Milica Vukasinovic: 
 
 ## License
 
