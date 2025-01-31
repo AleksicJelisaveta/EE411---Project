@@ -32,13 +32,13 @@ def main():
         # additional arguments for experiment A, not needed for B
         # hidden layer width, default 400, learning rate, default 0.001, dropout_input, default 0, dropout_hidden, default 0
 
-        parser = argparse.ArgumentParser(description='Neural Networks hyperparameters')
-        parser.add_argument('--hidden_layer_width', type=int, default=400, help='Width of hidden layer (default: 400)')
-        parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate (default: 0.001)')
-        parser.add_argument('--dropout_input', type=float, default=0, help='Dropout rate for input layer (default: 0)')
-        parser.add_argument('--dropout_hidden', type=float, default=0, help='Dropout rate for hidden layer (default: 0)')
+        # parser = argparse.ArgumentParser(description='Neural Networks hyperparameters')
+        # parser.add_argument('--hidden_layer_width', type=int, default=400, help='Width of hidden layer (default: 400)')
+        # parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate (default: 0.001)')
+        # parser.add_argument('--dropout_input', type=float, default=0, help='Dropout rate for input layer (default: 0)')
+        # parser.add_argument('--dropout_hidden', type=float, default=0, help='Dropout rate for hidden layer (default: 0)')
 
-        epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2 = run_experiment_2A(train_loaders, test_loaders, args.num_tasks, args.lambda_ewc, args.hidden_layer_width, args.learning_rate, args.dropout_input, args.dropout_hidden)
+        epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2 = run_experiment_2A(train_loaders, test_loaders, args.num_tasks)
         save_experiment_results_2A('experiment_A_results.csv', epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2)
 
     elif args.experiment == 'B':
