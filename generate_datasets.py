@@ -31,6 +31,9 @@ class RotatedMNIST(Dataset):
 
         img = np.array(img, dtype=np.float32)
 
+        # normalization
+        img = (img - np.min(img)) / (np.max(img) - np.min(img))
+
         rotated_image = rotate(img, self.rotation_degree, reshape = False)
 
         rotated_image_tensor = torch.tensor(rotated_image, dtype=torch.float32).unsqueeze(0)  
@@ -51,20 +54,19 @@ class PermutedMNIST(Dataset):
         self.data = data
         self.permutation = permutation if permutation is not None else np.random.permutation(28*28)
         self.normalize = normalize
-        self.mean = 0.1307
-        self.std = 0.3081
 
     def __len__(self):
         return len(self.data)
+
     def __getitem__(self, idx):
         img, label = self.data[idx]
-        
+
         img_flattened = np.array(img).flatten()  
         permuted_image = img_flattened[self.permutation] 
         permuted_image = permuted_image.reshape(28, 28)  
-        
+
         permuted_image_tensor = torch.tensor(permuted_image, dtype=torch.float32).unsqueeze(0)  
-        
+
         return permuted_image_tensor, label
 
 
