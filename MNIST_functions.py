@@ -1,14 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader, Subset, random_split
-from torchvision import datasets, transforms
+from torch.utils.data import DataLoader, Subset
 import numpy as np
 from ewc import EWC
-import generate_datasets as gen_ds
 from sklearn.model_selection import train_test_split
 import random
-import matplotlib.pyplot as plt
 
 #Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -126,7 +123,7 @@ def set_experiment_params(figure_type='2A'):
         early_stopping_enabled = False
         num_hidden_layers = 2
         width_hidden_layers = 400
-        lambda_ewc = 10000
+        lambda_ewc = 5000
         epochs = 20
     elif figure_type == '2B':
         learning_rate = np.logspace(-5, -3, 100)
@@ -135,7 +132,7 @@ def set_experiment_params(figure_type='2A'):
         early_stopping_enabled = True
         num_hidden_layers = 2
         width_hidden_layers = range(400,2000)
-        lambda_ewc = 10000
+        lambda_ewc = 5000
         epochs = 20
     else:
         raise ValueError(f"Unknown figure type: {figure_type}")
@@ -161,7 +158,7 @@ def evaluate_model_on_task(model, dataloader):
 
 def run_experiment_2A(permuted_train_loaders, permuted_test_loaders, num_tasks):
     learning_rate, dropout_input,dropout_hidden, early_stopping_enabled, num_hidden_layers, width_hidden_layers, lambda_ewc, epochs = set_experiment_params('2A')
-    
+
     print(f"Learning rate: {learning_rate}, Dropout input: {dropout_input}, Dropout hidden: {dropout_hidden}, Early stopping: {early_stopping_enabled}, Num hidden layers: {num_hidden_layers}, Width hidden layers: {width_hidden_layers}, Lambda {lambda_ewc}, Epochs: {epochs}")
 
     epoch_accuracies_SGD = {}
@@ -202,7 +199,8 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders, num_tasks):
     early_stopping = EarlyStopping(patience=5) if early_stopping_enabled else None
 
     for task_num in range(num_tasks):
-        epoch_accuracies_L2[task_num] = train_model_on_task(model_l2, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, early_stopping=early_stopping)
+        epoch_accuracies_L2[task_num] = 0.0
+        #epoch_accuracies_L2[task_num] = train_model_on_task(model_l2, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, early_stopping=early_stopping)
     
     return epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2
 
