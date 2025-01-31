@@ -1,6 +1,7 @@
 import argparse
 from MNIST_functions import run_experiment_2A, run_experiment_2B
 from generate_datasets import load_datasets
+from utils import *
 
 def main():
     parser = argparse.ArgumentParser(description='Run experiments for reproduction.')
@@ -37,9 +38,13 @@ def main():
         parser.add_argument('--dropout_input', type=float, default=0, help='Dropout rate for input layer (default: 0)')
         parser.add_argument('--dropout_hidden', type=float, default=0, help='Dropout rate for hidden layer (default: 0)')
 
-        run_experiment_2A(train_loaders, test_loaders, args.num_tasks, args.lambda_ewc, args.hidden_layer_width, args.learning_rate, args.dropout_input, args.dropout_hidden)
+        epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2 = run_experiment_2A(train_loaders, test_loaders, args.num_tasks, args.lambda_ewc, args.hidden_layer_width, args.learning_rate, args.dropout_input, args.dropout_hidden)
+        save_experiment_results_2A('experiment_A_results.csv', epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2)
+
     elif args.experiment == 'B':
-        run_experiment_2B(train_loaders, test_loaders, args.num_tasks, args.lambda_ewc)
+        avg_sgd_accuracy, avg_ewc_accuracy = run_experiment_2B(train_loaders, test_loaders, args.num_tasks, args.lambda_ewc)
+        save_fraction_correct_results(avg_ewc_accuracy, avg_sgd_accuracy, args.num_tasks, 'experiment_B_results.csv')
+
 
 if __name__ == '__main__':
     main()
