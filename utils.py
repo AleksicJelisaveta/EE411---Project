@@ -144,7 +144,7 @@ def save_fraction_correct_results(results_ewc, results_sgd, num_tasks, title):
 def save_experiment_results_2A(filename, epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2):
     
     rows = []
-    max_epochs=20
+    max_epochs = len(epoch_accuracies_SGD[0][0])
     # Loop through training tasks
     for train_task in epoch_accuracies_SGD:
         # Loop through evaluation tasks

@@ -199,8 +199,7 @@ def run_experiment_2A(permuted_train_loaders, permuted_test_loaders, num_tasks):
     early_stopping = EarlyStopping(patience=5) if early_stopping_enabled else None
 
     for task_num in range(num_tasks):
-        epoch_accuracies_L2[task_num] = 0.0
-        #epoch_accuracies_L2[task_num] = train_model_on_task(model_l2, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, early_stopping=early_stopping)
+        epoch_accuracies_L2[task_num] = train_model_on_task(model_l2, task_num+1, permuted_train_loaders[task_num], permuted_test_loaders[0:task_num+1], criterion, optimizer, epochs, early_stopping=early_stopping)
     
     return epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2
 

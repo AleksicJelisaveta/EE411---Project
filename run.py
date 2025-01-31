@@ -29,19 +29,32 @@ def main():
     if args.task_type == 'permute':
         train_loaders = permuted_train_loaders
         test_loaders = permuted_test_loaders
+    
     elif args.task_type == 'rotate':
         train_loaders = rotated_train_loaders
         test_loaders = rotated_test_loaders
+    
 
     if args.experiment == 'A':
+        
+        if args.task_type == 'permute':
+            title = "Training curves for random permutations"
+        elif args.task_type == 'rotate':
+            title = "Training curves for random rotations"
 
         epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2 = run_experiment_2A(train_loaders, test_loaders, args.num_tasks)
         save_experiment_results_2A('experiment_A_results.csv', epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2)
+        plot_experiment_2A(epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2, title)
 
     elif args.experiment == 'B':
+
+        if args.task_type == 'permute':
+            title = "Fraction Correct vs Number of Tasks for PermutedMNIST"
+        elif args.task_type == 'rotate':
+            title = "Fraction Correct vs Number of Tasks for RotatedMNIST"
         avg_sgd_accuracy, avg_ewc_accuracy = run_experiment_2B(train_loaders, test_loaders, args.num_tasks, args.lambda_ewc)
         save_fraction_correct_results(avg_ewc_accuracy, avg_sgd_accuracy, args.num_tasks, 'experiment_B_results.csv')
-
+        plot_fraction_correct_results(avg_ewc_accuracy, avg_sgd_accuracy, args.num_tasks, title)
 
 if __name__ == '__main__':
     main()
