@@ -27,7 +27,10 @@ def extract_epoch_accuracies(file_path):
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_experiment_2A(epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2):
+import numpy as np
+import matplotlib.pyplot as plt
+
+def plot_experiment_2A(epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2, title):
     def flatten(lst):
         return [item for sublist in lst for item in sublist]
     
@@ -58,6 +61,9 @@ def plot_experiment_2A(epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accurac
     fig, axes = plt.subplots(len(sgd_data), 1, figsize=(10, figure_height), sharex=True)
     colors = {'ewc': 'red', 'l2': 'green', 'sgd': 'blue'}
     max_len = len(sgd_data[0])
+   
+    # Add title to the first subplot
+    axes[0].set_title(title, fontsize=14, loc='center', pad=10)
 
     for task_index in range(len(sgd_data)):
         time = time_data[0]
@@ -87,9 +93,10 @@ def plot_experiment_2A(epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accurac
 
     axes[-1].set_xlabel("Training time")
     axes[-1].text(-0.1, -0.3, "Fraction correct", transform=axes[-1].transAxes, fontsize=10, ha="left", va="bottom")
-
+  
     plt.tight_layout()
     plt.show()
+
 
 def get_fraction_correct_results(ewc_file, sgd_file):
 
