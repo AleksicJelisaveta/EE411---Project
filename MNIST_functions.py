@@ -1,14 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader, Subset, random_split
-from torchvision import datasets, transforms
+from torch.utils.data import DataLoader, Subset
 import numpy as np
 from ewc import EWC
-import generate_datasets as gen_ds
 from sklearn.model_selection import train_test_split
 import random
-import matplotlib.pyplot as plt
 
 #Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -161,7 +158,7 @@ def evaluate_model_on_task(model, dataloader):
 
 def run_experiment_2A(permuted_train_loaders, permuted_test_loaders, num_tasks):
     learning_rate, dropout_input,dropout_hidden, early_stopping_enabled, num_hidden_layers, width_hidden_layers, lambda_ewc, epochs = set_experiment_params('2A')
-    
+
     print(f"Learning rate: {learning_rate}, Dropout input: {dropout_input}, Dropout hidden: {dropout_hidden}, Early stopping: {early_stopping_enabled}, Num hidden layers: {num_hidden_layers}, Width hidden layers: {width_hidden_layers}, Lambda {lambda_ewc}, Epochs: {epochs}")
 
     epoch_accuracies_SGD = {}
