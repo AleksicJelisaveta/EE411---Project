@@ -2,7 +2,7 @@ import gymnasium as gym
 import ale_py
 import torch
 import numpy as np
-from models import Agent
+from atari.models import Agent
 import random
 
 TARGET_UPDATE_PERIOD = 7500

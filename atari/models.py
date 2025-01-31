@@ -7,8 +7,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-from memory import ReplayBuffer
-from EWC_atari import ElasticWeightConsolidation
+from atari.memory import ReplayBuffer
+from atari.EWC_atari import ElasticWeightConsolidation
 
 GRAD_NORM_CLIP = 50
 CLIP_DELTA = 1.0
