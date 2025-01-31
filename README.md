@@ -178,11 +178,11 @@ This work was carried out as part of a reproducibility challenge, to validate th
 
 ## Group Contributions
 
-- Jelisaveta Aleksic: 
-- Natasa Jovanovic: 
-- Marija Rakonjac: 
-- Strahinja Nikolic: EWC implementation and debugging, running experiments for 2A permutated MNIST, writing README, cleaning code, reviewing report
-- Milica Vukasinovic: 
+- Jelisaveta Aleksic: Scripts for generating datasets and training, running experiments for 2A rotated and permutated MNIST, writing README
+- Natasa Jovanovic: Implementing and experimenting with Atari games, running 2B experiments for permutated and rotated MNIST, reviewing report
+- Marija Rakonjac: Scripts for experimenting and visualizing results, implementing models, writing report
+- Strahinja Nikolic: EWC implementation, running experiments for 2A permutated MNIST, writing README, cleaning code, reviewing report
+- Milica Vukasinovic: Scripts for training and running experiments, EWC implementation, writing report
 
 ## License
 
