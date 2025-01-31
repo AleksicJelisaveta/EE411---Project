@@ -5,6 +5,24 @@ import torch.nn.functional as F
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class EWC:
+    """
+    This module implements the Elastic Weight Consolidation (EWC) algorithm for continual learning.
+    EWC helps to mitigate catastrophic forgetting when training neural networks on sequential tasks.
+    The implementation is based on the original paper: "Overcoming catastrophic forgetting in neural networks" by Kirkpatrick et al.
+    Classes:
+        EWC: A class that encapsulates the EWC algorithm, including methods to compute the Fisher Information Matrix,
+             update parameter means, and compute the EWC loss.
+    Methods:
+        __init__(self, model):
+            Initializes the EWC object with the given model, and sets up the necessary data structures.
+        compute_fisher(self, data_loader):
+            Computes the Fisher Information Matrix for the current task using the provided data loader.
+        update_params(self):
+            Stores the mean parameter values after training on a task.
+        compute_ewc_loss(self, model, lambda_ewc=10.0):
+            Computes the EWC loss for the current model parameters, which acts as a regularization term to prevent
+            catastrophic forgetting.
+    """
     def __init__(self, model):
         self.model = model.to(device)
         self.params = {n: p.to(device) for n, p in self.model.named_parameters() if p.requires_grad}
