@@ -210,7 +210,7 @@ def run_experiment_2B(train_loaders, test_loaders,lambda_ewc=100, search_trials=
         criterion = nn.CrossEntropyLoss()
 
         # Experiment Parameters
-        learning_rate_range, dropout_input, dropout_hidden, early_stopping_enabled, num_hidden_layers, width_hidden_layer_range, epochs = set_experiment_params('2B')
+        learning_rate_range, dropout_input, dropout_hidden, early_stopping_enabled, num_hidden_layers, width_hidden_layer_range, lambda_ewc, epochs = set_experiment_params('2B')
 
         # Variables to track results for plotting
         sgd_accuracies = []

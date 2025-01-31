@@ -39,7 +39,7 @@ def main():
         save_experiment_results_2A('experiment_A_results.csv', epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accuracies_L2)
 
     elif args.experiment == 'B':
-        avg_sgd_accuracy, avg_ewc_accuracy = run_experiment_2B(train_loaders, test_loaders, args.num_tasks, args.lambda_ewc)
+        avg_sgd_accuracy, avg_ewc_accuracy = run_experiment_2B(train_loaders, test_loaders, args.num_tasks)
         save_fraction_correct_results(avg_ewc_accuracy, avg_sgd_accuracy, args.num_tasks, 'experiment_B_results.csv')
 
 
