@@ -56,7 +56,9 @@ def plot_experiment_2A(epoch_accuracies_SGD, epoch_accuracies_EWC, epoch_accurac
 
     # Define consistent y-axis limits
     y_min, y_max = min(all_accuracies), max(all_accuracies)
-    
+    y_max = y_max + 0.1 * (y_max - y_min)
+
+
     figure_height = len(sgd_data)
     fig, axes = plt.subplots(len(sgd_data), 1, figsize=(10, figure_height), sharex=True)
     colors = {'ewc': 'red', 'l2': 'green', 'sgd': 'blue'}

@@ -67,6 +67,7 @@ def train_model_on_task(model, train_type_id, train_dataloader, test_dataloader,
             loss = task_loss + ewc_loss
 
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             total_loss += task_loss.item()
           
